@@ -202,11 +202,11 @@ class Waveform:
     def wave_draw(self, *interval):
         fig, ax = plt.subplots(1, 1)
         if len(interval) == 0:
-            ax.plot(self.time, self.amp)
+            ax.plot(self.time, self.amp, marker=".")
         elif len(interval) == 2 and interval[0] < interval[1]:
             lower_index = self._value2index_lowerbound(interval[0])
             upper_index = self._value2index_upperbound(interval[1])
-            ax.plot(self.time[lower_index:upper_index + 1], self.amp[lower_index:lower_index + 1])
+            ax.plot(self.time[lower_index:upper_index + 1], self.amp[lower_index:lower_index + 1], marker=".")
         else:
             print("Interval set wrong!!")
             ax.plot(self.time, self.amp)
