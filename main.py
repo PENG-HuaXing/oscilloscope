@@ -7,7 +7,7 @@ from AnalysisSPESpectrumData import AnalysisSPESpectrumData
 
 if __name__ == "__main__":
     count = 0
-    data_file = "../_-300V_-1800V_-2300V_LED_10KHz_9V_28ns_20us_2.5GHz"
+    data_file = "/mnt/windows_file/DATA/21_12_21_gooddata/_-300V_-1800V_-2300V_LED_10KHz_9V_28ns_20us_2.5GHz/"
     wave_data = DataSet(data_file)
     print(wave_data.get_info())
     data_file_list, num = wave_data.get_data_file_with_abspath()
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         analysis_file.add_row(i, Q, t_bool, ped)
     print(analysis_file.get_pandas())
     # analysis_file = AnalysisSPESpectrumData.load_from_file("tmp_csv.csv")
-    analysis_file.save_as("tmp+-50ns_withped_csv")
+    analysis_file.save_as("_-300V_-1800V_-2300V_LED_10KHz_9V_28ns_20us_2.5GHz")
     analysis_file.draw_SPE_spectrum()
 
 

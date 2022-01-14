@@ -64,26 +64,22 @@ class Waveform:
         _sum = 0
         if len(args) == 1:
             upper = self._value2index_upperbound(args[0])
-            for i in range(upper + 1):
-                _sum += self.amp[i]
-            self.pedestal = _sum / (upper + 1)
+            ped_integral = integrate.trapezoid(self.amp[:upper+1], self.time[:upper+1])
+            self.pedestal = ped_integral / (self.time[upper] - self.time[0])
         elif len(args) == 2:
             lower = self._value2index_lowerbound(args[0])
             upper = self._value2index_upperbound(args[1])
-            for i in range(lower, upper+1):
-                _sum += self.amp[i]
-            self.pedestal = _sum / (upper-lower+1)
+            ped_integral = integrate.trapezoid(self.amp[lower:upper+1], self.time[lower:upper+1])
+            self.pedestal = ped_integral / (self.time[upper] - self.time[lower])
 
         elif len(args) == 4:
             lower1 = self._value2index_lowerbound(args[0])
             lower2 = self._value2index_lowerbound(args[2])
             upper1 = self._value2index_upperbound(args[1])
             upper2 = self._value2index_upperbound(args[3])
-            for i in range(lower1, upper1+1):
-                _sum += self.amp[i]
-            for i in range(lower2, upper2+1):
-                _sum += self.amp[i]
-            self.pedestal = _sum / (upper2 + upper1 - lower1 - lower2 + 2)
+            ped_integral1 = integrate.trapezoid(self.amp[lower1:upper1+1], self.time[lower1: upper1+1])
+            ped_integral2 = integrate.trapezoid(self.amp[lower2:upper2+1], self.time[lower2: upper2+1])
+            self.pedestal = ped_integral1 + ped_integral2 / (self.time[upper1] + self.time[upper2]-self.time[lower1]-self.time[lower2])
         else:
             print("Interval illegal!!")
 
