@@ -356,3 +356,15 @@ class Ui_Form(object):
         self.pushButton_17.setText(_translate("Form", "OK"))
         self.pushButton_12.setText(_translate("Form", "Resume"))
         self.pushButton_11.setText(_translate("Form", "Pause"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    widget = QtWidgets.QWidget()
+    ui = Ui_Form()
+    ui.setupUi(widget)
+    widget.show()
+    sys.exit(app.exec_())
+
+

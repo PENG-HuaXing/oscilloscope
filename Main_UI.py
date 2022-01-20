@@ -43,3 +43,13 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.pushButton.setText(_translate("MainWindow", "Enter"))
         self.label.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:48pt;\">说明信息</span></p></body></html>"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindows = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindows)
+    MainWindows.show()
+    sys.exit(app.exec_())
