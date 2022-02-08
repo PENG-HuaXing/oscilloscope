@@ -28,6 +28,11 @@ class DataSet:
     def set_target_path(self, path: str):
         if os.path.exists(path) and os.access(path, os.W_OK) and os.access(path, os.W_OK) and os.access(path, os.X_OK):
             self.target_path = os.path.abspath(path)
+            # 获取数据文件名称
+            self.data_file_list.clear()
+            for i in os.listdir(self.target_path):
+                if i.endswith(self.data_format):
+                    self.data_file_list.append(i)
         else:
             print("target path set failed!!")
 

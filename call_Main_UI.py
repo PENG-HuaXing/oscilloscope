@@ -35,14 +35,14 @@ class Welcome_UI(QMainWindow, Ui_MainWindow):
             self.call_window.emit("empty")
 
 
-    def go_to(self):
-        if self.next is not None:
-            if self.next == "Waveform Analyse":
-                return 1
-            if self.next == "SPE":
-                return 2
-        else:
-            QMessageBox.warning(None, "warning", "You didn't select any module", QMessageBox.Ok)
+    # def go_to(self):
+    #     if self.next is not None:
+    #         if self.next == "Waveform Analyse":
+    #             return 1
+    #         if self.next == "SPE":
+    #             return 2
+    #     else:
+    #         QMessageBox.warning(None, "warning", "You didn't select any module", QMessageBox.Ok)
 
 def jump_to(win_name:str):
     global ui_wave
@@ -62,8 +62,6 @@ if __name__ == "__main__":
     ui_SPE = call_SPE_UI.SPE_Ui()
     ui = Welcome_UI()
     ui.call_window.connect(jump_to)
-    # ui.pushButton.clicked.connect(ui_SPE.show)
     ui.show()
-    # ui.pushButton.connect(ui.go_to)
     sys.exit(app.exec_())
 
