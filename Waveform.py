@@ -71,7 +71,6 @@ class Waveform:
             upper = self._value2index_upperbound(args[1])
             ped_integral = integrate.trapezoid(self.amp[lower:upper+1], self.time[lower:upper+1])
             self.pedestal = ped_integral / (self.time[upper] - self.time[lower])
-
         elif len(args) == 4:
             lower1 = self._value2index_lowerbound(args[0])
             lower2 = self._value2index_lowerbound(args[2])

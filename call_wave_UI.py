@@ -1,9 +1,10 @@
 from wave import Ui_Form
 from Date_set import DataSet
 from Waveform import Waveform
+from AnalysisSPESpectrumData import AnalysisSPESpectrumData
 from Canvas import MatPlotCanvas
 
-import sys, os
+import sys, os, time
 from PyQt5.QtWidgets import QApplication, QWidget, QDialog, QAbstractItemView, QMessageBox
 from PyQt5.QtCore import pyqtSignal, Qt, QStringListModel, QModelIndex, QThread
 from PyQt5.Qt import QThreadPool
@@ -36,12 +37,12 @@ class WaveAnalysic(QWidget, Ui_Form):
         self.comboBox.currentIndexChanged.connect(self.get_integral_method)
         self.pushButton_5.clicked.connect(self.get_int_parameters)
         self.pushButton_6.clicked.connect(self.reset_int_setting)
-        self.comboBox_2.addItems(["MAX", "MIN"])
+        self.comboBox_2.addItems(["MAX", "MIN", "OFF"])
         self.comboBox_2.setCurrentIndex(-1)
         self.comboBox_2.currentIndexChanged.connect(self.get_ext_flag)
         self.pushButton_7.clicked.connect(self.get_extremum_parameters)
         self.pushButton_8.clicked.connect(self.reset_ext_setting)
-        self.comboBox_4.addItems(["above", "below"])
+        self.comboBox_4.addItems(["above", "below", "OFF"])
         self.comboBox_4.setCurrentIndex(-1)
         self.comboBox_4.currentIndexChanged.connect(self.get_tri_flag)
         self.pushButton_14.clicked.connect(self.get_tri_parameters)
@@ -58,9 +59,13 @@ class WaveAnalysic(QWidget, Ui_Form):
         self.checkBox_8.stateChanged.connect(self.active_lim)
         self.pushButton_16.clicked.connect(self.set_xlim)
         self.pushButton_17.clicked.connect(self.set_ylim)
-        self.pushButton_10.clicked.connect(self.go)
+        self.pushButton_10.clicked.connect(self.start_thread)
+        self.pushButton_11.clicked.connect(self.pause_thread)
+        self.pushButton_12.clicked.connect(self.resume_thread)
+        self.pushButton_13.clicked.connect(self.stop_thread)
 
         # Thread
+        self.thread = ThreadWork(self.go)
 
         # Canvas
         self.mpc = MatPlotCanvas(self)
@@ -91,6 +96,7 @@ class WaveAnalysic(QWidget, Ui_Form):
         self.save_file_name = None
         self.xlim_list = None
         self.ylim_list = None
+        self.thread_flag = 1
 
     def out_message(self, message: str):
         self.textEdit.append(message)
@@ -110,10 +116,8 @@ class WaveAnalysic(QWidget, Ui_Form):
                 list_view = self.data_file_list
             elif self.radioButton_2.isChecked():
                 list_view = list(map(os.path.relpath, self.data_file_list))
-                # self.data_file_list, num = self.dataset.get_data_file_with_relpath()
             else:
                 list_view = list(map(os.path.basename, self.data_file_list))
-                # self.data_file_list = list(map(os.path.basename, self.data_file_list))
             slm = QStringListModel()
             slm.setStringList(list_view)
             self.listView.setModel(slm)
@@ -122,7 +126,6 @@ class WaveAnalysic(QWidget, Ui_Form):
 
     def get_item(self, index: QModelIndex):
         self.wave_data_file = self.data_file_list[index.row()]
-        self.wave_data_file = self.dataset.get_info()["target_directory"] + "/" + os.path.basename(self.wave_data_file)
         if self.wave is None:
             self.wave = Waveform(*DataSet.read_csv(self.wave_data_file))
         else:
@@ -161,9 +164,11 @@ class WaveAnalysic(QWidget, Ui_Form):
             self.ped_interval.append(float(interval2.split(",")[1]))
         else:
             self.ped_interval.clear()
-            self.ped_interval.append(float(interval1.split(",")[0]))
-            self.ped_interval.append(float(interval1.split(",")[1]))
-        print(self.ped_interval)
+            if len(interval1.split(",")) == 2:
+                self.ped_interval.append(float(interval1.split(",")[0]))
+                self.ped_interval.append(float(interval1.split(",")[1]))
+            else:
+                self.ped_interval.append(float(interval1))
         self.radioButton_4.setEnabled(False)
         self.lineEdit.setEnabled(False)
         self.lineEdit_2.setEnabled(False)
@@ -221,10 +226,13 @@ class WaveAnalysic(QWidget, Ui_Form):
 
     def get_ext_flag(self):
         self.ext_flag = self.comboBox_2.currentText()
-        print(self.ext_flag)
+        if self.comboBox_2.currentText() == "OFF":
+            self.ext_flag = None
 
     def get_tri_flag(self):
         self.tri_flag = self.comboBox_4.currentText()
+        if self.comboBox_4.currentText() == "OFF":
+            self.tri_flag = None
 
     def get_tri_parameters(self):
         self.tri_voltage = float(self.lineEdit_6.text())
@@ -289,20 +297,171 @@ class WaveAnalysic(QWidget, Ui_Form):
         print(self.ylim_list)
 
     def go(self):
-        pass
+        if self.ext_flag is None and self.tri_flag is None:
+            analysis = AnalysisSPESpectrumData(["File", "Q", "pedestal"])
+            for i in self.data_file_list:
+                print(i)
+                wave = Waveform(*DataSet.read_csv(i))
+                wave.define_pedestal(*self.ped_interval)
+                integral_value = wave.integral_trapz_on_pedestal(*self.integral_interval)
+                ped = wave.get_info()["pedestal"]
+                self.message.emit(i)
+                if self.save_file_name is not None:
+                    analysis.add_row(i, integral_value, ped)
+                if self.thread_flag == 1:
+                    continue
+                elif self.thread_flag == 0:
+                    while True:
+                        time.sleep(1)
+                        if self.thread_flag == 0:
+                            continue
+                        else:
+                            break
+                else:
+                    break
+            analysis.save_as(self.save_file_name)
+        if self.ext_flag is None and (self.tri_flag == "below" or self.tri_flag == "above"):
+            analysis = AnalysisSPESpectrumData(["File", "Q", "pedestal", "tri_bool", "tri_index", "tri_time"])
+            for i in self.data_file_list:
+                print(i)
+                wave = Waveform(*DataSet.read_csv(i))
+                wave.define_pedestal(*self.ped_interval)
+                integral_value = wave.integral_trapz_on_pedestal(*self.integral_interval)
+                ped = wave.get_info()["pedestal"]
+                tri_bool, tri_index = wave.trigger(self.tri_voltage, *self.tri_interval)
+                self.message.emit(i)
+                if self.save_file_name is not None:
+                    analysis.add_row(i, integral_value, ped, tri_bool, tri_index, wave.get_time()[tri_index])
+                if self.thread_flag == 1:
+                    continue
+                elif self.thread_flag == 0:
+                    while True:
+                        time.sleep(1)
+                        if self.thread_flag == 0:
+                            continue
+                        else:
+                            break
+                else:
+                    break
+            analysis.save_as(self.save_file_name)
+        if self.ext_flag == "MIN" and self.tri_flag is None:
+            analysis = AnalysisSPESpectrumData(["File", "Q", "pedestal", "MIN_index", "MIN_amp", "MIN_time"])
+            for i in self.data_file_list:
+                print(i)
+                wave = Waveform(*DataSet.read_csv(i))
+                wave.define_pedestal(*self.ped_interval)
+                integral_value = wave.integral_trapz_on_pedestal(*self.integral_interval)
+                ped = wave.get_info()["pedestal"]
+                ext_value, ext_index = wave.get_min_amp(*self.extremum_interval)
+                self.message.emit(i)
+                if self.save_file_name is not None:
+                    analysis.add_row(i, integral_value, ped, tri_bool, ext_index, ext_value, wave.get_time()[ext_index])
+                if self.thread_flag == 1:
+                    continue
+                elif self.thread_flag == 0:
+                    while True:
+                        time.sleep(1)
+                        if self.thread_flag == 0:
+                            continue
+                        else:
+                            break
+                else:
+                    break
+            analysis.save_as(self.save_file_name)
+        if self.ext_flag == "MIN" and (self.tri_flag == "below" or self.tri_flag == "above"):
+            analysis = AnalysisSPESpectrumData(["File", "Q", "pedestal", "MIN_index", "MIN_amp", "MIN_time", "tri_bool", "tri_index", "tri_time"])
+            for i in self.data_file_list:
+                print(i)
+                wave = Waveform(*DataSet.read_csv(i))
+                wave.define_pedestal(*self.ped_interval)
+                integral_value = wave.integral_trapz_on_pedestal(*self.integral_interval)
+                ped = wave.get_info()["pedestal"]
+                ext_value, ext_index = wave.get_min_amp(*self.extremum_interval)
+                tri_bool, tri_index = wave.trigger(self.tri_voltage, *self.tri_interval)
+                self.message.emit(i)
+                if self.save_file_name is not None:
+                    analysis.add_row(i, integral_value, ped, tri_bool, ext_index, ext_value, wave.get_time()[ext_index], tri_bool, tri_index, wave.get_time()[tri_index])
+                if self.thread_flag == 1:
+                    continue
+                elif self.thread_flag == 0:
+                    while True:
+                        time.sleep(1)
+                        if self.thread_flag == 0:
+                            continue
+                        else:
+                            break
+                else:
+                    break
+            analysis.save_as(self.save_file_name)
+        if self.ext_flag == "MAX" and self.tri_flag is None:
+            analysis = AnalysisSPESpectrumData(["File", "Q", "pedestal", "MAX_index", "MAX_amp", "MAX_time"])
+            for i in self.data_file_list:
+                print(i)
+                wave = Waveform(*DataSet.read_csv(i))
+                wave.define_pedestal(*self.ped_interval)
+                integral_value = wave.integral_trapz_on_pedestal(*self.integral_interval)
+                ped = wave.get_info()["pedestal"]
+                ext_value, ext_index = wave.get_max_amp(*self.extremum_interval)
+                self.message.emit(i)
+                if self.save_file_name is not None:
+                    analysis.add_row(i, integral_value, ped, tri_bool, ext_index, ext_value, wave.get_time()[ext_index])
+                if self.thread_flag == 1:
+                    continue
+                elif self.thread_flag == 0:
+                    while True:
+                        time.sleep(1)
+                        if self.thread_flag == 0:
+                            continue
+                        else:
+                            break
+                else:
+                    break
+            analysis.save_as(self.save_file_name)
+        if self.ext_flag == "MAX" and (self.tri_flag == "below" or self.tri_flag == "above"):
+            analysis = AnalysisSPESpectrumData(["File", "Q", "pedestal", "MIN_index", "MAX_amp", "MAX_time", "tri_bool", "tri_index", "tri_time"])
+            for i in self.data_file_list:
+                print(i)
+                wave = Waveform(*DataSet.read_csv(i))
+                wave.define_pedestal(*self.ped_interval)
+                integral_value = wave.integral_trapz_on_pedestal(*self.integral_interval)
+                ped = wave.get_info()["pedestal"]
+                ext_value, ext_index = wave.get_max_amp(*self.extremum_interval)
+                tri_bool, tri_index = wave.trigger(self.tri_voltage, *self.tri_interval)
+                self.message.emit(i)
+                if self.save_file_name is not None:
+                    analysis.add_row(i, integral_value, ped, tri_bool, ext_index, ext_value, wave.get_time()[ext_index], tri_bool, tri_index, wave.get_time()[tri_index])
+                if self.thread_flag == 1:
+                    continue
+                elif self.thread_flag == 0:
+                    while True:
+                        time.sleep(1)
+                        if self.thread_flag == 0:
+                            continue
+                        else:
+                            break
+                else:
+                    break
+            analysis.save_as(self.save_file_name)
 
+    def start_thread(self):
+        self.thread.start()
 
+    def pause_thread(self):
+        self.thread_flag = 0
 
+    def resume_thread(self):
+        self.thread_flag = 1
 
+    def stop_thread(self):
+        self.thread_flag = 2
 
-
-
-
-
-
-
-
-
+class ThreadWork(QThread):
+    def __init__(self, fun, *args):
+        super(ThreadWork, self).__init__()
+        self.fun = fun
+        self.args = args
+    def run(self) -> None:
+        self.fun(*self.args)
 
 
 if __name__ == "__main__":

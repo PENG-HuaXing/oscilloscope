@@ -29,7 +29,8 @@ class AnalysisSPESpectrumData:
     def add_row(self, *args: list):
         if len(args) == len(self.columns):
             tmp_dict = dict(zip(self.columns, args))
-            self.pandas_data = self.pandas_data.append(tmp_dict, ignore_index=True)
+            self.pandas_data = pd.concat([self.pandas_data, pd.DataFrame([tmp_dict])], ignore_index=True)
+            # self.pandas_data = self.pandas_data.append(tmp_dict, ignore_index=True)
         else:
             print("args is wrong")
 
