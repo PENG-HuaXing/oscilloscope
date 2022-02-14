@@ -58,7 +58,7 @@ def jump_to(win_name:str):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ui_wave = call_wave_UI.wave_analysic()
+    ui_wave = call_wave_UI.WaveAnalysic()
     ui_SPE = call_SPE_UI.SPE_Ui()
     ui = Welcome_UI()
     ui.call_window.connect(jump_to)

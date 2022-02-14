@@ -444,6 +444,7 @@ class WaveAnalysic(QWidget, Ui_Form):
             analysis.save_as(self.save_file_name)
 
     def start_thread(self):
+        self.thread_flag = 1
         self.thread.start()
 
     def pause_thread(self):

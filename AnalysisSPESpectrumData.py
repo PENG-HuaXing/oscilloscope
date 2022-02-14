@@ -38,7 +38,7 @@ class AnalysisSPESpectrumData:
         self.pandas_data.drop(index=self.pandas_data.index, inplace=True)
 
     def get_info(self):
-        return {"shape:": self.pandas_data.shape, "columns_index": self.columns}
+        return {"shape": self.pandas_data.shape, "columns_index": self.columns}
 
     def get_pandas(self):
         return self.pandas_data
@@ -79,7 +79,7 @@ class AnalysisSPESpectrumData:
     def _model_exp(self, x: float, p_alpha: float) -> float:
         return p_alpha * np.exp(-p_alpha * x)
 
-    def _model_QDC(self,x: float, p_scale: float, p_omega: float, p_alpha: float,
+    def _model_QDC(self, x: float, p_scale: float, p_omega: float, p_alpha: float,
                    p_Q_under_amp: float, p_sigma_under_amp: float,
                    p_mu: float, p_Q0: float, p_sigma0: float, p_Q1: float, p_sigma1:float) -> float:
         """
