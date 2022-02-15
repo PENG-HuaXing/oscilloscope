@@ -65,12 +65,12 @@ class AfterPulse(object):
                 ampl.append(value)
         return time, ampl
 
-    def loop_and_save(self):
+    def loop_and_save(self, save_file: str, after_pulse_region: float, integral_window: float):
         after_pulse_data = []
         columns = ["File", "Time", "Q"]
         for i in range(len(self.filter_data)):
             print(self.filter_data["File"].iloc[i])
-            tmp_t, tmp_a = self.search_after_pulse(self.filter_data["File"].iloc[i], 0, 100e-9, self.filter_data["pedestal"].iloc[i])
+            tmp_t, tmp_a = self.search_after_pulse(self.filter_data["File"].iloc[i], after_pulse_region, integral_window, self.filter_data["pedestal"].iloc[i])
             t_a_data = list(zip(tmp_t, tmp_a))
             # print("t_a_data: {}".format(t_a_data))
             for j in t_a_data:
@@ -82,17 +82,17 @@ class AfterPulse(object):
                 # print(after_pulse_data)
             # print("after_pulse: {}".format(after_pulse_data))
         pd_data = pd.DataFrame(after_pulse_data, columns=columns)
-        pd_data.to_csv("After_Pulse.csv")
+        pd_data.to_csv(save_file)
 
 
 if __name__ == "__main__":
     af = AfterPulse("/run/media/einstein/Elements/CR160_data/1353V.csv", -0.15e-10, -0.002)
     af.filter_under_Q()
     data = af.get_filter_data()
-    # tim, amp = af.search_after_pulse("/run/media/einstein/Elements/CR160_data/CR160_-1353V_LED_3.7V_1kHz_29.8ns_20us_SyncTrigger/C4--w--00668.csv",0, 100e-9)
-    af.loop_and_save()
-    # print("time: {}".format(tim))
-    # print("amp: {}".format(amp))
+    tim, amp = af.search_after_pulse("/run/media/einstein/Elements/CR160_data/CR160_-1353V_LED_3.7V_1kHz_29.8ns_20us_SyncTrigger/C4--w--07002.csv",0, 150e-9)
+    # af.loop_and_save()
+    print("time: {}".format(tim))
+    print("amp: {}".format(amp))
 
 
 
