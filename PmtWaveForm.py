@@ -19,13 +19,12 @@ class WaveForm(object):
         self.bound2 = time[-1]
         self.delta_time = time[1] - time[0]
 
-    def load_from_csv(self, file: str):
-        data = pd.read_csv(file, header=4)
-        self.time = data["Time"]
-        self.ampl = data["Ampl"]
-        self.bound1 = self.time[0]
-        self.bound2 = self.time[-1]
-        self.delta_time = self.time[1] - self.time[0]
+    @classmethod
+    def load_from_csv(cls, file: str):
+        tmp_data = pd.read_csv(file, header=4)
+        tmp_t = tmp_data["Time"]
+        tmp_a = tmp_data["Ampl"]
+        return cls(tmp_t, tmp_a)
 
     def _value2index(self, value: float) -> int:
         """
@@ -53,7 +52,7 @@ class WaveForm(object):
     def get_delta_time(self) -> float:
         return self.delta_time
 
-    def integrate(self, interval1: float, interval2: float, pedestal: float = 0, method = PC.Wave.Trapezoid):
+    def integrate(self, interval1: float, interval2: float, pedestal: float = 0, method=PC.Wave.Trapezoid):
         """
         对指定区域进行积分，其中枚举TRAPZ为梯形
         积分法；枚举RIEMANN为矩形积分法
@@ -81,7 +80,7 @@ class WaveForm(object):
         index = np.where[np.fabs(self.ampl - var) < 1e-7][0][0]
         return var, index
 
-    def trigger(self,threshold: float, interval1, interval2, method=PC.Wave.Below) -> bool:
+    def trigger(self, threshold: float, interval1, interval2, method=PC.Wave.Below) -> bool:
         """
         在指定区间内判断是否触发，分为两种，分别是上触发
         和下触发。默认情况是下触发，既幅度低于阈值发生触
@@ -112,7 +111,8 @@ class WaveForm(object):
             return value / (interval2 - interval1)
         if int_method == PC.Wave.Riemann:
             value = self.integrate(interval1, interval2, 0, PC.Wave.Riemann)
-            return value /(interval2 - interval1)
+            return value / (interval2 - interval1)
+
 
 if __name__ == "__main__":
     data = pd.read_csv("C4--w--07002.csv", header=4)
@@ -129,9 +129,3 @@ if __name__ == "__main__":
     print("method2: {}".format(val2))
     print("method ped1: {}".format(pval1))
     print("method ped2: {}".format(pval2))
-
-
-
-
-
-
