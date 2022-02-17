@@ -1,4 +1,4 @@
-import PmtConstant as PC
+import PmtConstant as PmtC
 import numpy as np
 from scipy.integrate import trapezoid
 import pandas as pd
@@ -52,17 +52,17 @@ class WaveForm(object):
     def get_delta_time(self) -> float:
         return self.delta_time
 
-    def integrate(self, interval1: float, interval2: float, pedestal: float = 0, method=PC.Wave.Trapezoid):
+    def integrate(self, interval1: float, interval2: float, pedestal: float = 0, method=PmtC.Wave.Trapezoid):
         """
         对指定区域进行积分，其中枚举TRAPZ为梯形
         积分法；枚举RIEMANN为矩形积分法
         """
         interval_index = self._interval2index(interval1, interval2)
         int_method = method
-        if int_method == PC.Wave.Trapezoid:
+        if int_method == PmtC.Wave.Trapezoid:
             int_value = trapezoid(self.ampl[interval_index] - pedestal, self.time[interval_index])
             return int_value
-        if int_method == PC.Wave.Riemann:
+        if int_method == PmtC.Wave.Riemann:
             int_value = 0
             for i in self.ampl[interval_index]:
                 int_value += (i - pedestal)
@@ -80,25 +80,25 @@ class WaveForm(object):
         index = np.where[np.fabs(self.ampl - var) < 1e-7][0][0]
         return var, index
 
-    def trigger(self, threshold: float, interval1, interval2, method=PC.Wave.Below) -> bool:
+    def trigger(self, threshold: float, interval1, interval2, method=PmtC.Wave.Below) -> bool:
         """
         在指定区间内判断是否触发，分为两种，分别是上触发
         和下触发。默认情况是下触发，既幅度低于阈值发生触
         发
         """
         tri_method = method
-        if tri_method == PC.Wave.Below:
+        if tri_method == PmtC.Wave.Below:
             if self.ampl[self._interval2index(interval1, interval2)].min() < threshold:
                 return True
             else:
                 return False
-        if tri_method == PC.Wave.Above:
+        if tri_method == PmtC.Wave.Above:
             if self.ampl[self._interval2index(interval1, interval2)].max() > threshold:
                 return True
             else:
                 return False
 
-    def pedestal(self, interval1: float, interval2: float = None, method=PC.Wave.Trapezoid) -> float:
+    def pedestal(self, interval1: float, interval2: float = None, method=PmtC.Wave.Trapezoid) -> float:
         """
         计算基线，默认使用梯形积分法计算指定区域基线的平均值。
         也可以指定使用矩形积分法计算积分后除以区间长度得到平
@@ -106,11 +106,11 @@ class WaveForm(object):
         ，忽略不计
         """
         int_method = method
-        if int_method == PC.Wave.Trapezoid:
-            value = self.integrate(interval1, interval2, 0, PC.Wave.Trapezoid)
+        if int_method == PmtC.Wave.Trapezoid:
+            value = self.integrate(interval1, interval2, 0, PmtC.Wave.Trapezoid)
             return value / (interval2 - interval1)
-        if int_method == PC.Wave.Riemann:
-            value = self.integrate(interval1, interval2, 0, PC.Wave.Riemann)
+        if int_method == PmtC.Wave.Riemann:
+            value = self.integrate(interval1, interval2, 0, PmtC.Wave.Riemann)
             return value / (interval2 - interval1)
 
 
@@ -118,11 +118,11 @@ if __name__ == "__main__":
     data = pd.read_csv("C4--w--07002.csv", header=4)
     wave = WaveForm(data["Time"].to_numpy(), data["Ampl"].to_numpy())
     ped1 = wave.pedestal(wave.get_time_bound()[0], -200e-9)
-    ped2 = wave.pedestal(wave.get_time_bound()[0], -200e-9, PC.Wave.Riemann)
+    ped2 = wave.pedestal(wave.get_time_bound()[0], -200e-9, PmtC.Wave.Riemann)
     val1 = wave.integrate(-200e-9, 0, 0)
-    val2 = wave.integrate(-200e-9, 0, 0, PC.Wave.Riemann)
+    val2 = wave.integrate(-200e-9, 0, 0, PmtC.Wave.Riemann)
     pval1 = wave.integrate(-200e-9, 0, ped1)
-    pval2 = wave.integrate(-200e-9, 0, ped2, PC.Wave.Riemann)
+    pval2 = wave.integrate(-200e-9, 0, ped2, PmtC.Wave.Riemann)
     print("ped1: {}".format(ped1))
     print("ped2: {}".format(ped2))
     print("method1: {}".format(val1))
