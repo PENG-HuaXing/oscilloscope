@@ -11,6 +11,10 @@ class DataSetTool(object):
 
     @staticmethod
     def check_file(file: str) -> bool:
+        """
+        检查文件或者路径是否存在，是否
+        可读取，是否可写入
+        """
         if os.path.exists(file) and os.access(file, os.R_OK) and os.access(file, os.W_OK):
             return True
         else:
@@ -18,6 +22,11 @@ class DataSetTool(object):
 
     @staticmethod
     def read_wave(file: str, header: int = 4) -> tuple:
+        """
+        读取波形数据，返回时间，幅度的numpy序列，
+        鉴于目前波形数据的格式，暂时令文件头参数
+        为4,以后不同波形文件可更改
+        """
         if DataSetTool.check_file(file):
             pd_data = pd.read_csv(file, header=header)
             return pd_data["Time"].to_numpy(), pd_data["Ampl"].to_numpy()
@@ -25,7 +34,11 @@ class DataSetTool(object):
             print("File can't access!")
 
     @staticmethod
-    def read_file(file: str):
+    def read_file(file: str) -> pd.DataFrame:
+        """
+        单纯读取不同格式的文件(*.csv *.pkl *.root)
+        ，返回值为pd.DataFrame数据类型
+        """
         if DataSetTool.check_file(file):
             if file.endswith(".csv"):
                 return pd.read_csv(file)
@@ -38,6 +51,11 @@ class DataSetTool(object):
 
     @staticmethod
     def convert_format(read_file: str, file_type: str, out_file: str = "./", head: int = 4) -> None:
+        """
+        对不同类型的数据进行转换，由于波形的数据量比较大，
+        所以该函数主要针对波形数据csv转其他格式的情况。
+        当输入为csv数据，默认文件头为4.
+        """
         if DataSetTool.check_file(read_file) and DataSetTool.check_file(out_file):
             if read_file.endswith(".csv"):
                 pd_data = pd.read_csv(read_file, header=head)
