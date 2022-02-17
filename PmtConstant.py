@@ -8,3 +8,8 @@ class Wave(Enum):
     Interval = auto()
     Above = auto()
     Below = auto()
+
+class Fit(Enum):
+    Gauss = auto()
+    Exp = auto()
+    QDC = auto()
