@@ -37,7 +37,7 @@ class WaveForm(object):
         """
         通过区间寻找响应的index列表
         """
-        interval_index = np.where((self.time - interval1 - (interval2 - interval1)/2) < (interval2 - interval1)/2)[0]
+        interval_index = np.where(np.fabs((self.time - interval1 - (interval2 - interval1)/2)) < (interval2 - interval1)/2)[0]
         return interval_index
 
     def get_time(self) -> np.ndarray:

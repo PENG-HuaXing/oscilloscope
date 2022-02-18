@@ -9,7 +9,13 @@ class Wave(Enum):
     Above = auto()
     Below = auto()
 
+
 class Fit(Enum):
     Gauss = auto()
     Exp = auto()
     QDC = auto()
+
+
+class AfterPulse(Enum):
+    Pedestal = auto()
+    NoPedestal = auto()
