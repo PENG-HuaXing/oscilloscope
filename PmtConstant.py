@@ -13,6 +13,7 @@ class Wave(Enum):
 class Fit(Enum):
     Gauss = auto()
     Exp = auto()
+    DoubleGauss = auto()
     QDC = auto()
 
 
