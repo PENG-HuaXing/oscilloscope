@@ -20,3 +20,14 @@ class Fit(Enum):
 class AfterPulse(Enum):
     Pedestal = auto()
     NoPedestal = auto()
+
+
+class Extremum(Enum):
+    Max = auto()
+    Min = auto()
+
+
+class Processing(Enum):
+    Go = auto()
+    Stop = auto()
+    Pause = auto()
