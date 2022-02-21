@@ -77,11 +77,39 @@ class DataSetTool(object):
             else:
                 print("Format is wrong!")
 
+    @staticmethod
+    def check_interval(val_min: float, val_max: float, interval1: float, interval2: float) -> bool:
+        if val_min <= interval1 <= interval2 <= val_max:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def comma2interval(interval_comma: str) -> tuple:
+        str_list = interval_comma.replace(" ", "").split(",")
+        if len(str_list) == 2:
+            try:
+                a1 = float(str_list[0])
+                a2 = float(str_list[1])
+            except ValueError:
+                print("interval is wrong!")
+                return False, 0, 0
+            if a1 < a2:
+                return True, a1, a2
+            else:
+                print("interval is wrong!")
+                return False, 0, 0
+        else:
+            print("interval is wrong!")
+            return False, 0, 0
+
+
 
 if __name__ == "__main__":
     # t, a = DataSetTool.read_wave("C4--w--07002.csv")
-    DataSetTool.convert_format("C4--w--07002.csv", "pkl")
-    data = DataSetTool.read_file("C4--w--07002.pkl")
-    print(data)
+    # DataSetTool.convert_format("C4--w--07002.csv", "pkl")
+    # data = DataSetTool.read_file("C4--w--07002.pkl")
+    # print(data)
     # print(t)
     # print(a)
+    DataSetTool.comma2interval("0e1, 200e-9")
