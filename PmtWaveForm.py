@@ -22,8 +22,8 @@ class WaveForm(object):
     @classmethod
     def load_from_csv(cls, file: str):
         tmp_data = pd.read_csv(file, header=4)
-        tmp_t = tmp_data["Time"]
-        tmp_a = tmp_data["Ampl"]
+        tmp_t = tmp_data["Time"].to_numpy()
+        tmp_a = tmp_data["Ampl"].to_numpy()
         return cls(tmp_t, tmp_a)
 
     def _value2index(self, value: float) -> int:
@@ -115,8 +115,10 @@ class WaveForm(object):
 
 
 if __name__ == "__main__":
-    data = pd.read_csv("C4--w--07002.csv", header=4)
-    wave = WaveForm(data["Time"].to_numpy(), data["Ampl"].to_numpy())
+    # data = pd.read_csv("./source/C4--w--07002.csv", header=4)
+    # wave = WaveForm(data["Time"].to_numpy(), data["Ampl"].to_numpy())
+    wave = WaveForm.load_from_csv("./source/C4--w--07002.csv")
+
     ped1 = wave.pedestal(wave.get_time_bound()[0], -200e-9)
     ped2 = wave.pedestal(wave.get_time_bound()[0], -200e-9, PmtC.Wave.Riemann)
     val1 = wave.integrate(-200e-9, 0, 0)
