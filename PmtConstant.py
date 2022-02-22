@@ -31,3 +31,13 @@ class Processing(Enum):
     Go = auto()
     Stop = auto()
     Pause = auto()
+
+
+class Active(Enum):
+    Ped = auto()
+    NoPed = auto()
+    ExtMin = auto()
+    ExtMax = auto()
+    NoExt = auto()
+    Tri = auto()
+    NoTri = auto()
