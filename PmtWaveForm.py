@@ -71,13 +71,13 @@ class WaveForm(object):
     def max_ampl(self, interval1: float, interval2: float) -> tuple:
         interval_index = self._interval2index(interval1, interval2)
         var = self.ampl[interval_index].max()
-        index = np.where[np.fabs(self.ampl - var) < 1e-7][0][0]
+        index = np.where(np.fabs(self.ampl - var) < 1e-7)[0][0]
         return var, index
 
     def min_ampl(self, interval1: float, interval2: float) -> tuple:
         interval_index = self._interval2index(interval1, interval2)
         var = self.ampl[interval_index].min()
-        index = np.where[np.fabs(self.ampl - var) < 1e-7][0][0]
+        index = np.where(np.fabs(self.ampl - var) < 1e-7)[0][0]
         return var, index
 
     def trigger(self, threshold: float, interval1, interval2, method=PmtC.Wave.Below) -> bool:
@@ -125,6 +125,8 @@ if __name__ == "__main__":
     val2 = wave.integrate(-200e-9, 0, 0, PmtC.Wave.Riemann)
     pval1 = wave.integrate(-200e-9, 0, ped1)
     pval2 = wave.integrate(-200e-9, 0, ped2, PmtC.Wave.Riemann)
+    ext_val, ext_index = wave.min_ampl(-200e-9, 0)
+    print(ext_val, ext_index)
     print("ped1: {}".format(ped1))
     print("ped2: {}".format(ped2))
     print("method1: {}".format(val1))
