@@ -1,6 +1,8 @@
+import time
+
 from UiWaveForm import Ui_Form
 from PmtDataSetTool import DataSetTool
-from PmtConstant import Extremum, Processing
+from PmtConstant import Extremum, Processing, Active, Wave
 from CallDialog import ExtremumDialog, TriggerDialog
 from PmtWaveForm import WaveForm
 from Canvas import MatPlotCanvas
@@ -9,6 +11,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import sys, datetime, os
+import pandas as pd
 
 
 class CallUiWaveForm(Ui_Form, QWidget):
@@ -17,6 +20,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
     def __init__(self):
         super(CallUiWaveForm, self).__init__()
         self.setupUi(self)
+        self.text_message.connect(self.out_message)
         self.switch_integral_setting(False, False)
         self.switch_other_setting(False, False)
         self.pushButton.clicked.connect(self.load_file)
@@ -39,7 +43,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
         self.pushButton_5.clicked.connect(self.set_extremum)
         self.pushButton_6.clicked.connect(self.set_trigger)
         self.pushButton_7.clicked.connect(self.select_save_file)
-        self.pushButton_8.clicked.connect(self.run)
+        self.pushButton_8.clicked.connect(self.start_thread)
         self.pushButton_9.clicked.connect(lambda: self.set_processing_flag(self.pushButton_9))
         self.pushButton_10.clicked.connect(lambda: self.set_processing_flag(self.pushButton_10))
         self.pushButton_11.clicked.connect(lambda: self.set_processing_flag(self.pushButton_11))
@@ -51,6 +55,11 @@ class CallUiWaveForm(Ui_Form, QWidget):
         # 成员函数
         self.wave_form = None
         self.processing_flag = Processing.Go
+        self.data_file_list = []
+
+        # 线程
+        self.my_thread = WorkThread(self.run)
+        self.my_thread.finished.connect(self.work_finish)
 
         # Canvas
         self.canvas = MatPlotCanvas(self)
@@ -61,10 +70,6 @@ class CallUiWaveForm(Ui_Form, QWidget):
         canvas_size_policy.setHorizontalStretch(0)
         canvas_size_policy.setVerticalStretch(2)
         self.canvas.setSizePolicy(canvas_size_policy)
-
-
-
-
 
     def switch_integral_setting(self, group: bool, visible: bool, widget: bool = True):
         self.groupBox.setEnabled(group)
@@ -97,6 +102,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
         self.pushButton_11.setEnabled(enable)
 
     def load_file(self):
+        self.data_file_list.clear()
         dir_name = QFileDialog.getExistingDirectory(self, caption="选择文件夹", directory="/mnt/windows_file/DATA")
         if dir_name == "":
             QMessageBox.warning(self, "警告", "未选择任何文件夹", QMessageBox.Ok)
@@ -106,13 +112,15 @@ class CallUiWaveForm(Ui_Form, QWidget):
             for i in file_list:
                 if i.endswith(".csv"):
                     base_name.append(i)
-            slm = QStringListModel()
             base_name.sort()
+            for i in base_name:
+                self.data_file_list.append(os.path.join(dir_name, i))
+            slm = QStringListModel()
             slm.setStringList(base_name)
             self.listView.setModel(slm)
             self.lineEdit.setText(dir_name)
             self.lineEdit_2.setText(str(len(file_list)))
-            self.wave_form = WaveForm.load_from_csv(os.path.join(dir_name, base_name[0]))
+            self.wave_form = WaveForm.load_from_csv(self.data_file_list[0])
             self.lineEdit_3.setText(str(format(self.wave_form.get_time_bound()[0], '.2e')))
             self.lineEdit_4.setText(str(format(self.wave_form.get_time_bound()[1], '.2e')))
             self.lineEdit_5.setText(str(format(self.wave_form.get_delta_time(), '.2e')))
@@ -122,6 +130,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
             self.pushButton_6.setEnabled(False)
 
     def list_clear(self):
+        self.data_file_list.clear()
         slm = QStringListModel()
         slm.setStringList([])
         self.listView.setModel(slm)
@@ -153,6 +162,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
             self.switch_run_setting(True)
             self.pushButton_4.setEnabled(True)
             self.comboBox.setEnabled(True)
+            self.checkBox.setEnabled(True)
 
     def reset_integral_setting(self):
         check_status = self.checkBox.isChecked()
@@ -215,8 +225,84 @@ class CallUiWaveForm(Ui_Form, QWidget):
         else:
             QMessageBox.warning(self, "警告", "文件夹无效", QMessageBox.Ok)
 
+    def collect_param(self) -> dict:
+        param = {"int_flag": Wave.Trapezoid, "int_interval": None, "ped_flag": Active.NoPed, "ped_interval": None,
+                 "ext_flag": Active.NoExt, "ext_interval": None, "tri_flag": Active.NoTri, "tri_threshold": None,
+                 "tri_interval": None}
+        # 基线参数获取
+        if self.checkBox.isChecked():
+            param["ped_flag"] = Active.Ped
+            self.lineEdit_7.setEnabled(True)
+            param["ped_interval"] = DataSetTool.comma2interval(self.lineEdit_7.text())
+            self.lineEdit_7.setEnabled(False)
+        # 积分参数获取
+        if self.comboBox.currentIndex() == 1:
+            param["int_flag"] = Wave.Riemann
+        self.lineEdit_6.setEnabled(True)
+        param["int_interval"] = DataSetTool.comma2interval(self.lineEdit_6.text())
+        self.lineEdit_6.setEnabled(False)
+        # 获取极值参数
+        if self.checkBox_2.isChecked():
+            if self.label_9.text() == "极大值":
+                param["ext_flag"] = Active.ExtMax
+            else:
+                param["ext_flag"] = Active.ExtMin
+                param["ext_interval"] = DataSetTool.comma2interval(self.lineEdit_8.text())
+        # 获取触发参数
+        if self.checkBox_3.isChecked():
+            param["tri_flag"] = Active.Tri
+            param["tri_threshold"] = float(self.label_13.text())
+            param["tri_interval"] = DataSetTool.comma2interval(self.lineEdit_9.text())
+        return param
+
     def run(self):
-        pass
+        print("Enter Run")
+        param = self.collect_param()
+        data = []
+        ped = 0
+        print(param)
+        for i in self.data_file_list:
+            row = []
+            row.append(i)
+            wave = WaveForm.load_from_csv(i)
+            if param["ped_flag"] == Active.Ped:
+                ped = wave.pedestal(param["ped_interval"][1], param["ped_interval"][2], param["int_flag"])
+            int_value = wave.integrate(param["int_interval"][1], param["int_interval"][2], ped, param["int_flag"])
+            row.append(int_value)
+            row.append(ped)
+            if param["ext_flag"] == Active.ExtMin:
+                ext_value, ext_index = wave.min_ampl(param["ext_interval"][1], param["ext_interval"][2])
+                row.append(ext_value)
+            if param["ext_flag"] == Active.ExtMax:
+                ext_value, ext_index = wave.max_ampl(param["ext_interval"][1], param["ext_interval"][2])
+                row.append(ext_value)
+            if param["tri_flag"] == Active.Tri:
+                tri_value = wave.trigger(param["tri_threshold"], param["tri_interval"][1], param["tri_interval"][2])
+                row.append(tri_value)
+            data.append(row)
+            self.text_message.emit(i)
+            print(i)
+            # 进程控制
+            while True:
+                if self.processing_flag == Processing.Go:
+                    break
+                if self.processing_flag == Processing.Pause:
+                    time.sleep(1)
+                    continue
+                if self.processing_flag == Processing.Stop:
+                    break
+            if self.processing_flag == Processing.Stop:
+                break
+
+        col = ["File", "Q", "Pedestal"]
+        if param["ext_flag"] != Active.NoExt:
+            col.append("Extremum")
+        if param["tri_flag"] == Active.Tri:
+            col.append("Trigger")
+        save_file = self.lineEdit_10.text()
+        pd_data = pd.DataFrame(data, columns=col)
+        if DataSetTool.check_file(os.path.dirname(save_file)):
+            pd_data.to_csv(save_file)
 
     def draw_wave(self, index: QModelIndex):
         self.canvas.ax.cla()
@@ -230,7 +316,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
             x_check, a1, a2 = DataSetTool.comma2interval(self.lineEdit_11.text())
             print(x_check, a1, a2)
             if x_check:
-                print(a1,a2)
+                print(a1, a2)
                 self.canvas.ax.set_xlim(a1, a2)
         if self.checkBox_5.isChecked():
             y_check, b1, b2 = DataSetTool.comma2interval(self.lineEdit_12.text())
@@ -267,6 +353,25 @@ class CallUiWaveForm(Ui_Form, QWidget):
                     else:
                         self.draw_wave(down_model_index)
         return QWidget.eventFilter(self, a0, a1)
+
+    def out_message(self, message: str):
+        self.textBrowser.append(datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")+": "+message)
+
+    def work_finish(self):
+        self.text_message.emit("完成")
+
+    def start_thread(self):
+        self.my_thread.start()
+
+
+class WorkThread(QThread):
+    def __init__(self, fun, *args):
+        super(WorkThread, self).__init__()
+        self.fun = fun
+        self.args = args
+
+    def run(self) -> None:
+        self.fun(*self.args)
 
 
 
