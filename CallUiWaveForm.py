@@ -1,5 +1,4 @@
-import time
-
+import time, sys, datetime, os
 from UiWaveForm import Ui_Form
 from PmtDataSetTool import DataSetTool
 from PmtConstant import Extremum, Processing, Active, Wave
@@ -10,7 +9,6 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-import sys, datetime, os
 import pandas as pd
 
 
@@ -27,7 +25,8 @@ class CallUiWaveForm(Ui_Form, QWidget):
         self.pushButton_2.clicked.connect(self.list_clear)
         self.comboBox.addItems(["Trapezoid", "Riemann"])
         interval_regex = QRegExpValidator(self)
-        reg = QRegExp(r"^([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)\s*,\s*([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)")
+        reg = QRegExp(r"^(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)\s*,"
+                      r"\s*(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)")
         interval_regex.setRegExp(reg)
         self.lineEdit_6.setValidator(interval_regex)
         self.lineEdit_7.setValidator(interval_regex)
@@ -372,17 +371,6 @@ class WorkThread(QThread):
 
     def run(self) -> None:
         self.fun(*self.args)
-
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":
