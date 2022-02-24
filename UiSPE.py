@@ -286,10 +286,10 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.label.setText(_translate("Form", "文件路径"))
-        self.label_2.setText(_translate("Form", "文件名称"))
-        self.label_3.setText(_translate("Form", "文件信息"))
-        self.label_4.setText(_translate("Form", "文件大小"))
+        self.label.setText(_translate("Form", "文件路径："))
+        self.label_2.setText(_translate("Form", "文件名称："))
+        self.label_3.setText(_translate("Form", "文件信息："))
+        self.label_4.setText(_translate("Form", "文件大小："))
         self.pushButton.setText(_translate("Form", "添加文件"))
         self.pushButton_2.setText(_translate("Form", "选择文件"))
         self.pushButton_3.setText(_translate("Form", "移除文件"))
