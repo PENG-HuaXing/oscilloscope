@@ -105,7 +105,6 @@ class DataSetTool(object):
             return False, 0, 0
 
 
-
 if __name__ == "__main__":
     # t, a = DataSetTool.read_wave("C4--w--07002.csv")
     # DataSetTool.convert_format("C4--w--07002.csv", "pkl")
