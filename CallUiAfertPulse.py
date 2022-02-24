@@ -297,6 +297,6 @@ class WorkThread(QThread):
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    win = CallAfterPulse()
+    win = CallUiAfterPulse()
     win.show()
     sys.exit(app.exec_())
