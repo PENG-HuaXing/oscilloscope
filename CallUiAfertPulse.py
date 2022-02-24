@@ -13,11 +13,11 @@ from PmtAfterPulse import AfterPulse
 import pandas as pd
 
 
-class CallAfterPulse(QWidget, Ui_Form):
+class CallUiAfterPulse(QWidget, Ui_Form):
     text_message = pyqtSignal(str)
 
     def __init__(self):
-        super(CallAfterPulse, self).__init__()
+        super(CallUiAfterPulse, self).__init__()
         self.setupUi(self)
         self.switch_filter_setting(False)
         self.switch_after_pulse_setting(False)

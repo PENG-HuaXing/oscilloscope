@@ -55,7 +55,6 @@ class CallUiSPE(Ui_Form, QWidget):
         self.checkBox.toggled.connect(self.refresh)
         self.checkBox_2.toggled.connect(self.refresh)
         self.checkBox_3.toggled.connect(self.refresh)
-        self.checkBox_5.toggled.connect(self.refresh)
 
         # var
         self.files_list = []
