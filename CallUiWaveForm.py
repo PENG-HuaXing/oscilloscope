@@ -124,9 +124,12 @@ class CallUiWaveForm(Ui_Form, QWidget):
             self.lineEdit_4.setText(str(format(self.wave_form.get_time_bound()[1], '.2e')))
             self.lineEdit_5.setText(str(format(self.wave_form.get_delta_time(), '.2e')))
             self.switch_integral_setting(True, False, True)
+            self.checkBox.setChecked(False)
             self.switch_other_setting(True, False)
             self.pushButton_5.setEnabled(False)
             self.pushButton_6.setEnabled(False)
+            self.checkBox_2.setChecked(False)
+            self.checkBox_3.setChecked(False)
 
     def list_clear(self):
         self.data_file_list.clear()
