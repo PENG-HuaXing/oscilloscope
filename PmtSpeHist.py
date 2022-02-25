@@ -67,10 +67,37 @@ class SpeHist(object):
         return s_spe
 
     @staticmethod
+    def double_spe(x: float, mu: float, q2: float, sigma2: float):
+        poisson = mu * mu * np.exp(-mu) / 2
+        return poisson * SpeHist.model_gauss(x, 1, q2, sigma2)
+
+    @staticmethod
+    def triple_spe(x: float, mu: float, q3: float, sigma3: float):
+        poisson = mu * mu * mu * np.exp(-mu) / 6
+        return poisson * SpeHist.model_gauss(x, 1, q3, sigma3)
+
+    @staticmethod
     def model_double_gauss(x: float, amp: float, mu: float, q0: float, sigma0: float, q1: float, sigma1: float):
         term1 = amp * SpeHist.signal_ped(x, mu, q0, sigma0)
         term2 = amp * SpeHist.signal_spe(x, mu, q1, sigma1)
         return term2 + term1
+
+    @staticmethod
+    def model_triple_gauss(x: float, amp: float, mu: float, q0: float, sigma0: float, q1: float, sigma1: float,
+                           q2: float, sigma2: float):
+        term1 = amp * SpeHist.signal_ped(x, mu, q0, sigma0)
+        term2 = amp * SpeHist.signal_spe(x, mu, q1, sigma1)
+        term3 = amp * SpeHist.double_spe(x, mu, q2, sigma2)
+        return term1 + term2 + term3
+
+    @staticmethod
+    def model_four_gauss(x: float, amp: float, mu: float, q0: float, sigma0: float, q1: float, sigma1: float,
+                         q2: float, sigma2: float, q3: float, sigma3: float):
+        term1 = amp * SpeHist.signal_ped(x, mu, q0, sigma0)
+        term2 = amp * SpeHist.signal_spe(x, mu, q1, sigma1)
+        term3 = amp * SpeHist.double_spe(x, mu, q2, sigma2)
+        term4 = amp * SpeHist.double_spe(x, mu, q3, sigma3)
+        return term2 + term1 + term3 + term4
 
     @staticmethod
     def model_qdc(x: float, p_scale: float, p_omega: float, p_alpha: float,
@@ -108,7 +135,22 @@ class SpeHist(object):
         if mod == PmtC.Fit.DoubleGauss:
             if len(param) == 6:
                 ppot, pcov = curve_fit(SpeHist.model_double_gauss, self.get_scatter()[0], self.get_scatter()[1], param)
-                # ppot, pcov = curve_fit(SpeHist.model_double_gauss, self.get_scatter()[0], self.get_scatter()[1],bounds=([10, 0, -1, 0, 1, 0], [500, 1, 1, 1, 5, 5]))
+                return ppot, pcov
+            else:
+                print("param is wrong")
+                return None, None
+        if mod == PmtC.Fit.TripleGauss:
+            if len(param) == 8:
+                # ppot, pcov = curve_fit(SpeHist.model_triple_gauss, self.get_scatter()[0], self.get_scatter()[1], param)
+                ppot, pcov = curve_fit(SpeHist.model_triple_gauss, self.get_scatter()[0], self.get_scatter()[1], param,
+                                       bounds=(()))
+                return ppot, pcov
+            else:
+                print("param is wrong")
+                return None, None
+        if mod == PmtC.Fit.TripleGauss:
+            if len(param) == 10:
+                ppot, pcov = curve_fit(SpeHist.model_triple_gauss, self.get_scatter()[0], self.get_scatter()[1], param)
                 return ppot, pcov
             else:
                 print("param is wrong")
@@ -130,28 +172,32 @@ if __name__ == "__main__":
     from PmtSinglePhotonSpectrum import SinglePhotonSpectrum
     import matplotlib.pyplot as plt
     # 类初始化
-    spe = SinglePhotonSpectrum.load_csv("./source/1353V.csv")
-    spe_hist = SpeHist(spe.get_charge(), bins=np.linspace(-2, 8, 300), scale=-1e11)
+    spe = SinglePhotonSpectrum.load_csv("/run/media/einstein/Elements/2022_2_25_CR160_data/windows_0_250ns_spe.csv")
+    spe_hist = SpeHist(spe.get_charge(), bins=np.linspace(-3, 25, 300), scale=-1e11)
     cont, bins = spe_hist.get_hist()
     # 输出散点数据
-    with open("scatter.txt", "w") as f:
-        for i in range(len(spe_hist.get_scatter()[0])):
-            row = str(spe_hist.get_scatter()[0][i]) + "\t" + str(spe_hist.get_scatter()[1][i]) + "\n"
-            f.write(row)
+    # with open("scatter.txt", "w") as f:
+    #     for i in range(len(spe_hist.get_scatter()[0])):
+    #         row = str(spe_hist.get_scatter()[0][i]) + "\t" + str(spe_hist.get_scatter()[1][i]) + "\n"
+    #         f.write(row)
     # 高斯拟合
-    param, p_cov = spe_hist.fit_spe(PmtC.Fit.Gauss, 2, 6, 100, 2, 3)
+    # param, p_cov = spe_hist.fit_spe(PmtC.Fit.Gauss, 2, 6, 100, 2, 3)
     # 双高斯拟合
-    double_par, _ = spe_hist.fit_spe(PmtC.Fit.DoubleGauss, 1, 1, 10, 0.1, 0, 1, 3, 1)
-    print("双高斯拟合参数: {}".format(double_par))
-    # 全域拟合
-    global_param = [200, 0.4, 10, 0.1, 1, 0.1, 0.1, 0.5, 3, 1, 10]
-    gp, gc = spe_hist.fit_spe(PmtC.Fit.QDC, 1, 1, *global_param)
-    # print("全域拟合参数: {}".format(gp))
+    # double_par, _ = spe_hist.fit_spe(PmtC.Fit.DoubleGauss, 1, 1, 10, 0.1, 0, 1, 3, 1)
+    # print("双高斯拟合参数: {}".format(double_par))
+    # 三高斯拟合
+    triple_par, _ = spe_hist.fit_spe(PmtC.Fit.TripleGauss, 1, 2, 500, 0.5, 0, 1, 5, 2, 10, 3)
+    print("三高斯拟合参数: {}".format(triple_par))
+
     # 绘制曲线
     fig, ax = plt.subplots()
     ax.hist(spe_hist.get_scatter()[0], bins, weights=cont, histtype="step")
-    ax.plot(bins, SpeHist.model_gauss(bins, *param))
-    ax.plot(bins, SpeHist.model_double_gauss(bins, *double_par))
+    # ax.plot(bins, SpeHist.model_gauss(bins, *param))
+    # ax.plot(bins, SpeHist.model_double_gauss(bins, *double_par))
+    ax.plot(bins, SpeHist.model_triple_gauss(bins, *triple_par))
+    ax.plot(bins, triple_par[0] * SpeHist.signal_ped(bins, triple_par[1], triple_par[2], triple_par[3]))
+    ax.plot(bins, triple_par[0] * SpeHist.signal_spe(bins, triple_par[1], triple_par[4], triple_par[5]))
+    ax.plot(bins, triple_par[0] * SpeHist.double_spe(bins, triple_par[1], triple_par[6], triple_par[7]))
 
     # 绘制论文曲线
     # pp = [6.28e4, 0.392, 38.7, 450.7, 8.941, 0.1055, 442.7, 1.732, 529.5, 28.36, 269.6]
