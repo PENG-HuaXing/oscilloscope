@@ -1,7 +1,6 @@
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5.QtGui import *
 from UiMain import Ui_MainWindow
 import CallUiWaveForm as UiW
 import CallUiSPE as UiSPE
