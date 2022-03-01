@@ -104,6 +104,36 @@ class DataSetTool(object):
             print("interval is wrong!")
             return False, 0, 0
 
+    @staticmethod
+    def convert_spe2txt(file: str, save_file: str = "histogram.txt"):
+        file_name = file
+        f = open(save_file, "w")
+        if DataSetTool.check_file(file_name):
+            pd_data = pd.read_csv(file_name)
+            for i in pd_data["Q"]:
+                f.write(str(i) + "\n")
+        else:
+            print("文件不存在")
+        f.close()
+
+    @staticmethod
+    def convert_qdc2txt(file: str, channel: int = 1, save_file: str = "histogram.txt"):
+        file_name = file
+        if DataSetTool.check_file(file_name):
+            f = open(save_file, "w")
+            pd_data = pd.read_table(file)
+            hist_content = pd_data.iloc[:, channel]
+            # 一共4095个信道， 第一个信道的content落在0.5，
+            # 第二个信道的content落在1.5...以此类推
+            bin = 0.5
+            for i in hist_content:
+                for j in range(int(i)):
+                    f.write(str(bin) + "\n")
+                bin += 1
+            f.close()
+        else:
+            print("文件夹不存在")
+
 
 if __name__ == "__main__":
     # t, a = DataSetTool.read_wave("C4--w--07002.csv")
@@ -112,4 +142,6 @@ if __name__ == "__main__":
     # print(data)
     # print(t)
     # print(a)
-    DataSetTool.comma2interval("0e1, 200e-9")
+    # DataSetTool.convert_spe2txt("/run/media/einstein/Elements/2022_2_25_CR160_data/windows_0_250ns_spe.csv")
+    DataSetTool.convert_qdc2txt("/run/media/einstein/Elements/CR160_SPE/2022.01.17/CR160_-1450V_LED_1KHz_3.7V_32ns_V965_CH1.txt", 1, "histogram_qdc.txt")
+
