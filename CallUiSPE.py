@@ -229,7 +229,7 @@ class CallUiSPE(Ui_Form, QWidget):
                 # debug
                 # f, a = plt.subplots()
                 # xx = np.linspace(-2, 2, 1000)
-                # a.plot(xx, SpeHist.model_gauss(xx, *ppot))
+                # a.plot(xx, SpeHist.gauss(xx, *ppot))
                 # plt.show()
             elif dict_data["model"] == Fit.DoubleGauss and len(self.hist) != 0 and flag:
                 ppot, pcov = self.hist[0].fit_spe(dict_data["model"], interval1, interval2, float(dict_data["p5"]),
@@ -283,10 +283,10 @@ class CallUiSPE(Ui_Form, QWidget):
             if collection["fitting"] is True and self.fit["model"] is not None:
                 xx = self.hist[0].get_scatter()[0]
                 if self.fit["model"] == Fit.Gauss:
-                    self.canvas.ax.plot(xx, self.hist[0].model_gauss(xx, *self.fit["param"]))
+                    self.canvas.ax.plot(xx, self.hist[0].gauss(xx, *self.fit["param"]))
                     # debug
                     # f, a = plt.subplots()
-                    # a.plot(xx, self.hist[0].model_gauss(xx, *self.fit["param"]))
+                    # a.plot(xx, self.hist[0].gauss(xx, *self.fit["param"]))
                     # plt.show()
                 if self.fit["model"] == Fit.DoubleGauss:
                     self.canvas.ax.plot(xx, self.hist[0].model_double_gauss(xx, *self.fit["param"]))
