@@ -159,46 +159,60 @@ double global_fun_noise(double * xx, double * par)
 int global_fit()
 {
 	gStyle->SetOptFit(1111);
-	auto f = new TF1("f", global_fun, -3, 25, 6);
-	auto f_noise = new TF1("f_noise", global_fun_noise, -3,3, 8);
+	auto f = new TF1("f", global_fun, -3, 25, 6);//无指数噪声模型
+	auto f_noise = new TF1("f_noise", global_fun_noise, -3,3, 8);//含有指数噪声模型
 	vector<double> data; 
 	double a;
 	ifstream infile;
-	infile.open("histogram.txt", ios::in);
+	infile.open("./example/histogram_qdc.txt", ios::in);
 	for(;infile.good();)
 	{
 		infile >> a;
-		data.push_back(-1e11 * a);
+		data.push_back(a);
 	}
-	auto h = new TH1D("h", "h", 300, -4, 25);
+	double start_bin = 940;
+	double end_bins = 1200;
+	auto h = new TH1D("h", "h", int(end_bins-start_bin), start_bin, end_bins);
 	for(size_t i=0;i<data.size();i++)
 	{
 		h->Fill(data.at(i));
 	}
-	f->SetParameters(3.1e2, 6e-1, 1e-1, 4e-1, 4, 1);
-	f_noise->SetParameters(3e4, 0.4, 0.6, 0.6, 0, 0.5, 4.5, 1.5);
+	//******************2022_2_25_CR160_data拟合初值设置*********************************
+	//f->SetParameters(3.1e2, 6e-1, 1e-1, 4e-1, 4, 1);
+	//f_noise->SetParameters(3e4, 0.4, 0.6, 0.6, 0, 0.5, 4.5, 1.5);
 	//f_noise->SetParLimits(3, 0.2, 0.8);//mu
 	//f_noise->SetParLimits(4, -0.5, 0.5); //q0
 	//f_noise->SetParLimits(5, 0, 2); //sigma0
 	//f_noise->SetParLimits(6, 4, 6);//q1
 	//f_noise->SetParLimits(7, 0, 10);//sigma1
+	//***********************************************************************************
+	//*********CR160_-1450V_LED_1KHz_3.7V_32ns_V965_CH1.txt初值设置**********************
+	//f->SetParameters(2e4, 0.4, 950, 1, 37, 16);
+	f_noise->SetParameters(2.77e4, 0.4, 0.06, 1.094, 955, 1.733, 30, 11.05);
+	//f_noise->SetParLimits(3, 0.2, 0.8);//mu
+	//f_noise->SetParLimits(4, -0.5, 0.5); //q0
+	//f_noise->SetParLimits(5, 0, 2); //sigma0
+	//f_noise->SetParLimits(6, 4, 6);//q1
+	//f_noise->SetParLimits(7, 0, 10);//sigma1
+	//***********************************************************************************
 
-	h->Fit(f_noise);
-	double * fit_par = new double [8];
-	f_noise->GetParameters(fit_par);
-	auto f_ped = new TF1("f_ped", S_ped_noise, -5,10, 5);
-	f_ped->SetParameters(fit_par[1], fit_par[2], fit_par[3], fit_par[4], fit_par[5]);
-	f_ped->SetLineColor(kBlue);
-	auto f_signal = new TF1("f_signal", S_nspe_qsh, 0, 80, 6);
-	f_signal->SetParameters(fit_par[1], fit_par[2], fit_par[3], fit_par[4], fit_par[6], fit_par[7]);
-	f_signal->SetLineColor(kGreen);
+	//h->Fit(f);//拟合无指数噪声的模型
+	h->Fit(f_noise);//拟合带有指数噪声的模型
+	//double * fit_par = new double [8];
+	//f_noise->GetParameters(fit_par);
+	//auto f_ped = new TF1("f_ped", S_ped_noise, -5,10, 5);
+	//f_ped->SetParameters(fit_par[1], fit_par[2], fit_par[3], fit_par[4], fit_par[5]);
+	//f_ped->SetLineColor(kBlue);
+	//auto f_signal = new TF1("f_signal", S_nspe_qsh, 0, 80, 6);
+	//f_signal->SetParameters(fit_par[1], fit_par[2], fit_par[3], fit_par[4], fit_par[6], fit_par[7]);
+	//f_signal->SetLineColor(kGreen);
+	//auto c2 = new TCanvas("c2", "c2", 800, 600);
+	//f_signal->Draw("C");
+	//for (int i =0;i<8;i++)
+	//{
+		//std::cout << fit_par[i] << std::endl;
+	//}
 	auto c1 = new TCanvas("c1", "c1", 800, 600);
 	h->Draw();
-	auto c2 = new TCanvas("c2", "c2", 800, 600);
-	f_signal->Draw("C");
-	for (int i =0;i<8;i++)
-	{
-		std::cout << fit_par[i] << std::endl;
-	}
 	return 0;
 }
