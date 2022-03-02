@@ -1,5 +1,5 @@
 import numpy as np
-import PmtConstant as PmtC
+from PmtConstant import Fit
 from scipy.optimize import curve_fit
 
 
@@ -44,15 +44,12 @@ class SpeHist(object):
         return {"bound1": self.edge1, "bound2": self.edge2, "bin_num": self.bin_num, "scale": self.scale}
 
     @staticmethod
-    def gauss(x: float, p_scale: float = 1, p_mean: float = 1, p_sigma: float = 1) -> float:
-        return p_scale / (np.sqrt(2 * np.pi) * p_sigma) * np.exp(-(x - p_mean) ** 2 / (2 * p_sigma ** 2))
+    def gauss(x: float, scale: float = 1, mean: float = 1, sigma: float = 1) -> float:
+        return scale / (np.sqrt(2 * np.pi) * sigma) * np.exp(-(x - mean) ** 2 / (2 * sigma ** 2))
 
     @staticmethod
-    def noise_exp(x: float, p_alpha: float, q0: float = 0) -> float:
-        if x > q0:
-            return p_alpha * np.exp(-p_alpha * x)
-        else:
-            return 0
+    def noise_exp(x: float, alpha: float, q0: float = 0) -> float:
+        return np.heaviside(x-q0, 1) * alpha * np.exp(-alpha * (x - q0))
 
     @staticmethod
     def poisson(n: int, mu: float):
@@ -60,93 +57,98 @@ class SpeHist(object):
         return mu ** n * np.exp(-mu) / np.math.factorial(n)
 
     @staticmethod
-    def signal_ped_noise(x: float, omega: float, alpha: float, mu: float, q0: float, sigma0: float):
-        s_noise = omega * SpeHist.noise_exp(x, alpha, q0) + SpeHist.gauss(x, 1 - omega, q0, sigma0)
-        return SpeHist.poisson(0, mu) * s_noise
-
-    @staticmethod
-    def signal_ped(x: float, mu: float, q0: float, sigma0: float):
+    def s_ped(x: float, mu: float, q0: float, sigma0: float):
         s_ped = SpeHist.poisson(0, mu) * SpeHist.gauss(x, 1, q0, sigma0)
         return s_ped
 
     @staticmethod
-    def signal_spe(x: float, mu: float, q0: float, q1: float, sigma1: float, n: int = 1, qsh: float = 0):
-        value = SpeHist.poisson(n, mu) * SpeHist.gauss(x, 1, q0 + qsh + n * q1, np.sqrt(n) * sigma1)
-        return value
+    def s_ped_noise(x: float, w: float, alpha: float, mu: float, q0: float, sigma0: float):
+        s_ped_noise = w * SpeHist.noise_exp(x, alpha, q0) + SpeHist.gauss(x, 1 - w, q0, sigma0)
+        return SpeHist.poisson(0, mu) * s_ped_noise
 
     @staticmethod
-    def signal_n_spe(x: float, mu: float, q0: float, q1: float, sigma1: float, n: int = 1, qsh: float = 0):
+    def n_gauss(x: float, mu: float, q0: float, q1: float, sigma1: float, n: int = 2, qsh: float = 0):
         n = int(n)
+        return SpeHist.poisson(n, mu) * SpeHist.gauss(x, 1, q0 + qsh + n * q1, np.sqrt(n) * sigma1)
+
+    @staticmethod
+    def signal_n_spe(x: float, mu: float, q0: float, q1: float, sigma1: float, qsh: float = 0):
+        n = 5
         value = 0
         for i in range(1, n + 1):
             value = value + SpeHist.poisson(i, mu) * SpeHist.gauss(x, 1, q0 + qsh + i * q1, np.sqrt(i) * sigma1)
         return value
 
     @staticmethod
-    def model_n_spe(x: float, amp: float, mu: float, q0: float, sigma0: float, q1: float, sigma1: float, n: int = 1):
-        """:ivar
-        S_noise = (1-w)*Gauss(x, q0, sigma0)+w*theta(q0)*alpha*exp(-alpha*(x-q0))
-        S_n_spe = Gauss(x, q0+qsh+n*q1, sqrt(x)*sigma1)
-        S(x) = poisson(0, mu)*S_noise + sum{ poisson(n, mu)*S_n_spe }
-        """
-        term1 = amp * SpeHist.signal_ped(x, mu, q0, sigma0)
-        term2 = amp * SpeHist.signal_n_spe(x, mu, q0, q1, sigma1, n)
-        return term1 + term2
+    def global_model(x: float, amp: float, mu: float, q0: float, sigma0: float, q1:float, sigma1:float):
+        term1 = SpeHist.s_ped(x, mu, q0, sigma0)
+        term2 = SpeHist.signal_n_spe(x, mu, q0, q1, sigma1)
+        return amp * (term1 + term2)
 
     @staticmethod
-    def model_qdc(x: float, p_scale: float, p_omega: float, p_alpha: float,
-                  p_q_under_amp: float, p_sigma_under_amp: float, p_mu: float, p_q0: float,
-                  p_sigma0: float, p_q1: float, p_sigma1: float, p_scale_noise: float) -> float:
-        """
-        S_QDC(q) = S_noise + S_ped + S_nSEP
-        S_noise = omega * noise_exp  + (1 - omega) * model_gaus
-        S_ped = Poission(0) * gauss
-        S_nSEP = Poission(n) * gauss
-        come from
-        https://doi.org/10.1007/s41605-018-0085-8
-        """
-        # s_noise = SpeHist.signal_noise(x, p_omega, p_alpha, p_q_under_amp, p_sigma_under_amp)
-        # s_ped = SpeHist.signal_ped(x, p_mu, p_q0, p_sigma0)
-        # s_n_spe = SpeHist.signal_spe(x, p_mu, p_q1, p_sigma1)
-        # return p_scale * (s_ped + s_n_spe) + p_scale_noise * s_noise
+    def global_noise_model(x: float, amp: float, w: float, alpha: float, mu: float, q0: float, sigma0: float, q1: float,
+                           sigma1: float):
+        term1 = SpeHist.s_ped_noise(x, w, alpha, mu, q0, sigma0)
+        term2 = SpeHist.signal_n_spe(x, mu, q0, q1, sigma1, w/alpha)
+        return amp * (term1 + term2)
 
-    def fit_spe(self, model=PmtC.Fit.Gauss, interval1: float = None, interval2: float = None, *param) -> tuple:
+    def fit_spe(self, model=Fit.Gauss, interval1: float = None, interval2: float = None, *param) -> tuple:
         """
         拟合方法，可对指定区域进行gauss拟合，也可以
         对全域进行多种函数的复合拟合。返回数值为元组
         其中包含拟合参数,拟合参数的方差
+        len(param) == 18                len(param) == 24
+        param[0]: amp                   param[0]: amp
+        param[3]: mu					param[3]: w
+        param[6]: q0					param[6]: alpha
+        param[9]: sigma0				param[9]: mu
+        param[12]: q1					param[12]: q0
+        param[15]: sigma1				param[15]: sigma0
+                                        param[18]: q1
+                                        param[21]: sigma1
         """
         mod = model
-        if mod == PmtC.Fit.Gauss:
+        if mod == Fit.Gauss:
             if interval1 is None or interval2 is None:
                 print("Interval wrong!")
                 return None, None
+            elif len(param) == 3:
+                par = []
+                bounds = []
+                for i in param:
+                    par.append(i[0])
+                    bounds.append((i[1], i[2]))
+                fit_par, par_cov = curve_fit(SpeHist.gauss, self.scatter_x[self._interval2index(interval1, interval2)],
+                                             self.scatter_y[self._interval2index(interval1, interval2)], par,
+                                             bounds=list(zip(*bounds)))
+                return fit_par, par_cov
             else:
-                ppot, pcov = curve_fit(SpeHist.gauss, self.scatter_x[self._interval2index(interval1, interval2)],
-                                       self.scatter_y[self._interval2index(interval1, interval2)],
-                                       param)
-                return ppot, pcov
-        if mod == PmtC.Fit.DoubleGauss:
-            if len(param) == 7:
-                print("param is 7")
-                ff = lambda x, a, b, c, d, e, f: SpeHist.model_n_spe(x, a, b, c, d, e, f, param[6])
-                print("param 6 is : {}".format(param[6]))
-                ppot, pcov = curve_fit(ff, self.scatter_x, self.scatter_y, [param[0], param[1], param[2], param[3],
-                                       param[4], param[5]])
-            else:
-                ppot, pcov = curve_fit(SpeHist.model_n_spe, self.scatter_x, self.scatter_y, param)
-            return ppot, pcov
-        if mod == PmtC.Fit.QDC:
-            if len(param) >= 10:
-                print(len(param))
-                print(param)
-                ppot, pcov = curve_fit(SpeHist.model_qdc, self.scatter_x, self.scatter_y, param)
-                return ppot, pcov
-            else:
-                print(len(param))
-                print(param)
-                print("parameter is wrong")
+                print("参数错误")
                 return None, None
+        if mod == Fit.Global:
+            if len(param) == 6:
+                par = []
+                bounds = []
+                for i in param:
+                    par.append(i[0])
+                    bounds.append((i[1], i[2]))
+                fit_par, par_cov = curve_fit(SpeHist.global_model, self.scatter_x, self.scatter_y, par,
+                                             bounds=list(zip(*bounds)))
+                return fit_par, par_cov
+            else:
+                print("参数错误")
+        if mod == Fit.GlobalNoise:
+            if len(param) == 8:
+                par = []
+                bounds = []
+                for i in param:
+                    par.append(i[0])
+                    bounds.append((i[1], i[2]))
+                fit_par, par_cov = curve_fit(SpeHist.global_noise_model, self.scatter_x, self.scatter_y, par,
+                                             bounds=list(zip(*bounds)))
+                return fit_par, par_cov
+            else:
+                print("参数错误")
 
 
 if __name__ == "__main__":
@@ -157,43 +159,25 @@ if __name__ == "__main__":
     spe = SinglePhotonSpectrum.load_csv("/run/media/einstein/Elements/2022_2_25_CR160_data/windows_0_250ns_spe.csv")
     spe_hist = SpeHist(spe.get_charge(), bins, scale=-1e11)
     cont, bins = spe_hist.get_hist()
-    # 输出散点数据
-    # with open("scatter.txt", "w") as f:
-    #     for i in range(len(spe_hist.get_scatter()[0])):
-    #         row = str(spe_hist.get_scatter()[0][i]) + "\t" + str(spe_hist.get_scatter()[1][i]) + "\n"
-    #         f.write(row)
-    # 高斯拟合
-    # param, p_cov = spe_hist.fit_spe(PmtC.Fit.Gauss, 2, 6, 100, 2, 3)
-    # 双高斯拟合
-    double_par, _ = spe_hist.fit_spe(PmtC.Fit.DoubleGauss, 1, 1, 3000, 0.5, 0, 0.41, 5, 2, 4)
-    print("双高斯拟合参数: {}".format(double_par))
-    # 三高斯拟合
+    # 全局拟合无噪声
+    # global_par, _ = spe_hist.fit_spe(Fit.Global, 1, 1, [3000, -np.inf, np.inf], [0.5, 0, 1], [0, -np.inf, np.inf], [0.1, 0, np.inf], [5, -np.inf, np.inf], [1, 0, np.inf])
+    # print("双高斯拟合参数: {}".format(global_par))
+    # 全局拟合有噪声
+    global_par, _ = spe_hist.fit_spe(Fit.GlobalNoise, 1, 1, [3100, -np.inf, np.inf], [0.4, 0, 1], [5, -np.inf, np.inf], [0.5, 0, 1], [0.1, -np.inf, np.inf], [0.4, 0, np.inf], [4.6, 4, 5], [1.5, 0, 2])
+    print("拟合参数: {}".format(global_par))
 
     # 绘制曲线
     fig, ax = plt.subplots()
     ax.hist(spe_hist.get_scatter()[0], bins, weights=cont, histtype="step")
-    ax.plot(bins, SpeHist.model_n_spe(bins, *double_par, 4))
-    ax.plot(bins, double_par[0] * SpeHist.signal_ped(bins, double_par[1], double_par[2], double_par[3]))
-    ax.plot(bins, double_par[0] * SpeHist.signal_n_spe(bins, double_par[1], double_par[2], double_par[4], double_par[5], 1))
-    # ax.plot(bins, double_par[0] * SpeHist.signal_n_spe(bins, double_par[1], double_par[2], double_par[4], double_par[5], 2))
-    ax.plot(bins, double_par[0] * SpeHist.poisson(2, double_par[1]) * SpeHist.gauss(bins, 1, 2*double_par[4], np.sqrt(2) * double_par[5]))
-    ax.plot(bins, double_par[0] * SpeHist.poisson(3, double_par[1]) * SpeHist.gauss(bins, 1, 3*double_par[4], np.sqrt(3) * double_par[5]))
-    ax.plot(bins, double_par[0] * SpeHist.poisson(4, double_par[1]) * SpeHist.gauss(bins, 1, 4*double_par[4], np.sqrt(4) * double_par[5]))
-    # ax.plot(bins, double_par[0] * SpeHist.poisson(1, double_par[1]) * SpeHist.gauss(bins, 1, 1*double_par[4], np.sqrt(1) * double_par[5]))
-    # ax.plot(bins, double_par[0] * SpeHist.poisson(1, double_par[1]) * SpeHist.gauss(bins, 1, 1*double_par[4], np.sqrt(1) * double_par[5]) + double_par[0] * SpeHist.poisson(2, double_par[1]) * SpeHist.gauss(bins, 1, 2*double_par[4], np.sqrt(2) * double_par[5]))
-    # ax.plot(bins, SpeHist.gauss(bins, *param))
-    # ax.plot(bins, SpeHist.model_double_gauss(bins, *double_par))
-    # 绘制论文曲线
-    # pp = [6.28e4, 0.392, 38.7, 450.7, 8.941, 0.1055, 442.7, 1.732, 529.5, 28.36, 269.6]
-    # x = np.linspace(400, 750, 300)
-    # xx = np.linspace(400, 750, 1000)
-    # 绘制曲线
-    # f, a = plt.subplots()
-    # a.plot(xx, SpeHist.model_qdc(xx, *pp))
-    # a.plot(x, pp[0] * SpeHist.signal_ped(x, pp[5], pp[6], pp[7]))
-    # a.plot(x, pp[0] * SpeHist.signal_spe(x, pp[5], pp[8], pp[9]))
-    # a.plot(x, pp[10] * SpeHist.signal_noise(x, pp[1], pp[2], pp[3], pp[4]))
-
+    bins = np.linspace(-4, 25, 1000)
+    ax.plot(bins, SpeHist.global_noise_model(bins, *global_par))
+    ax.plot(bins, global_par[0] * (1-global_par[1]) * SpeHist.s_ped(bins, global_par[3], global_par[4], global_par[5]), "--")
+    ax.plot(bins, global_par[0] * global_par[1] * SpeHist.poisson(0, global_par[3]) * SpeHist.noise_exp(bins, global_par[2], global_par[4]), "--")
+    ax.plot(bins, global_par[0] * SpeHist.n_gauss(bins, global_par[3], global_par[4], global_par[6], global_par[7], 1), "--")
+    ax.plot(bins, global_par[0] * SpeHist.n_gauss(bins, global_par[3], global_par[4], global_par[6], global_par[7], 2), "--")
+    ax.plot(bins, global_par[0] * SpeHist.n_gauss(bins, global_par[3], global_par[4], global_par[6], global_par[7], 3), "--")
+    ax.plot(bins, global_par[0] * SpeHist.n_gauss(bins, global_par[3], global_par[4], global_par[6], global_par[7], 4), "--")
+    ax.plot(bins, global_par[0] * SpeHist.n_gauss(bins, global_par[3], global_par[4], global_par[6], global_par[7], 5), "--")
     plt.show()
     # 输出散点数据到txt文件中
 
