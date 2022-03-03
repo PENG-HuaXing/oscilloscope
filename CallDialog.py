@@ -71,7 +71,8 @@ class TriggerDialog(QDialog):
         self.label2 = QLabel("区间(s)：")
         self.interval = QLineEdit()
         interval_reg = QRegExpValidator(self)
-        reg = QRegExp(r"^([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)\s*,\s*([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)")
+        reg = QRegExp(r"^(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)\s*,"
+                      r"\s*(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)")
         interval_reg.setRegExp(reg)
         self.interval.setValidator(interval_reg)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
