@@ -19,8 +19,12 @@ class CallUiWaveForm(Ui_Form, QWidget):
         super(CallUiWaveForm, self).__init__()
         self.setupUi(self)
         self.text_message.connect(self.out_message)
+        # 初始状态
         self.switch_integral_setting(False, False)
         self.switch_other_setting(False, False)
+        self.switch_run_setting(False)
+        self.switch_process(False)
+        # 载入文件， 清空文件
         self.pushButton.clicked.connect(self.load_file)
         self.pushButton_2.clicked.connect(self.list_clear)
         self.comboBox.addItems(["Trapezoid", "Riemann"])
@@ -34,24 +38,29 @@ class CallUiWaveForm(Ui_Form, QWidget):
         self.lineEdit_9.setValidator(interval_regex)
         self.lineEdit_11.setValidator(interval_regex)
         self.lineEdit_12.setValidator(interval_regex)
+        # 计算基线checkbox
         self.checkBox.toggled.connect(self.set_ped)
         self.pushButton_3.clicked.connect(self.integral_setting_ok)
         self.pushButton_4.clicked.connect(self.reset_integral_setting)
+        # 极值记录checkbox
         self.checkBox_2.toggled.connect(self.active_ext_setting)
+        # 触发记录checkbox
         self.checkBox_3.toggled.connect(self.active_trigger_setting)
+        # 极值参数设置
         self.pushButton_5.clicked.connect(self.set_extremum)
+        # 触发参数设置
         self.pushButton_6.clicked.connect(self.set_trigger)
+        # 设置保存数据文件
         self.pushButton_7.clicked.connect(self.select_save_file)
+        # 开始循环
         self.pushButton_8.clicked.connect(self.start_thread)
         self.pushButton_9.clicked.connect(lambda: self.set_processing_flag(self.pushButton_9))
         self.pushButton_10.clicked.connect(lambda: self.set_processing_flag(self.pushButton_10))
         self.pushButton_11.clicked.connect(lambda: self.set_processing_flag(self.pushButton_11))
         self.listView.clicked.connect(self.draw_wave)
         self.listView.installEventFilter(self)
-        self.pushButton_12.setVisible(False)
-        self.pushButton_13.setVisible(False)
 
-        # 成员函数
+        # 成员变量
         self.wave_form = None
         self.processing_flag = Processing.Go
         self.data_file_list = []
@@ -96,6 +105,8 @@ class CallUiWaveForm(Ui_Form, QWidget):
         self.lineEdit_10.setEnabled(enable)
         self.pushButton_7.setEnabled(enable)
         self.pushButton_8.setEnabled(enable)
+
+    def switch_process(self, enable: bool):
         self.pushButton_9.setEnabled(enable)
         self.pushButton_10.setEnabled(enable)
         self.pushButton_11.setEnabled(enable)
@@ -123,8 +134,10 @@ class CallUiWaveForm(Ui_Form, QWidget):
             self.lineEdit_3.setText(str(format(self.wave_form.get_time_bound()[0], '.2e')))
             self.lineEdit_4.setText(str(format(self.wave_form.get_time_bound()[1], '.2e')))
             self.lineEdit_5.setText(str(format(self.wave_form.get_delta_time(), '.2e')))
+            # 加载文件成功， 积分设置控件状态
             self.switch_integral_setting(True, False, True)
             self.checkBox.setChecked(False)
+            # 加载文件成功， 其他设置控件状态
             self.switch_other_setting(True, False)
             self.pushButton_5.setEnabled(False)
             self.pushButton_6.setEnabled(False)
@@ -136,13 +149,19 @@ class CallUiWaveForm(Ui_Form, QWidget):
         slm = QStringListModel()
         slm.setStringList([])
         self.listView.setModel(slm)
+        # 清空文件后控件状态
         self.switch_integral_setting(False, False)
         self.switch_other_setting(False, False)
         self.switch_run_setting(False)
+        self.switch_process(False)
+        # 清空参数输入框的内容
         self.lineEdit_6.clear()
         self.lineEdit_7.clear()
         self.lineEdit_8.clear()
         self.lineEdit_9.clear()
+        # 清空保存文件框的内容
+        self.lineEdit_10.clear()
+        # 清楚文件信息框的内容
         self.lineEdit.clear()
         self.lineEdit_2.clear()
         self.lineEdit_3.clear()
@@ -165,10 +184,14 @@ class CallUiWaveForm(Ui_Form, QWidget):
             self.pushButton_4.setEnabled(True)
             self.comboBox.setEnabled(True)
             self.checkBox.setEnabled(True)
+            self.switch_run_setting(True)
+            self.lineEdit_10.setText("./spe.csv")
 
     def reset_integral_setting(self):
         check_status = self.checkBox.isChecked()
         self.switch_integral_setting(True, check_status)
+        self.switch_run_setting(False)
+        self.lineEdit_10.clear()
 
     def active_ext_setting(self, status: bool):
         self.pushButton_5.setEnabled(status)
@@ -186,7 +209,6 @@ class CallUiWaveForm(Ui_Form, QWidget):
             self.label_12.setVisible(False)
             self.lineEdit_9.setVisible(False)
             self.lineEdit_9.clear()
-            self.label_13.setText("0")
 
     def set_extremum(self):
         dialog = ExtremumDialog(self)
@@ -360,9 +382,17 @@ class CallUiWaveForm(Ui_Form, QWidget):
         self.textBrowser.append(datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")+": "+message)
 
     def work_finish(self):
+        self.lineEdit_10.setReadOnly(False)
+        self.switch_process(False)
+        self.pushButton_7.setEnabled(True)
+        self.pushButton_8.setEnabled(True)
         self.text_message.emit("完成")
 
     def start_thread(self):
+        self.switch_process(True)
+        self.lineEdit_10.setReadOnly(True)
+        self.pushButton_7.setEnabled(False)
+        self.pushButton_8.setEnabled(False)
         self.my_thread.start()
 
 
