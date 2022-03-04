@@ -20,16 +20,19 @@ class CallUiSPE(Ui_Form, QWidget):
     def __init__(self):
         super(CallUiSPE, self).__init__()
         self.setupUi(self)
-        self.out_message.connect(self.show_message)
         self.pushButton_2.setVisible(False)
-        self.textBrowser_2.setVisible(False)
+        self.checkBox_3.setTristate(True)
+        # 初始控件状态
         self.switch_portion(False)
         self.switch_hist_setting(False)
         self.switch_fit_setting(False)
         self.switch_graph_setting(False)
+        # 载入文件
         self.pushButton.clicked.connect(self.add_files)
+        # 移除文件和清空文件
         self.pushButton_3.clicked.connect(self.remove_file)
         self.pushButton_4.clicked.connect(self.clear_listview)
+        # 选择文件动作
         self.listView.clicked.connect(self.show_file_info)
         self.listView.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.lineEdit_5.setText("1")
@@ -46,21 +49,27 @@ class CallUiSPE(Ui_Form, QWidget):
         self.lineEdit_5.setValidator(sci_validator)
         self.lineEdit_6.setValidator(interval_validator)
         self.lineEdit_7.setValidator(int_validator)
+        # 绘制谱图
         self.pushButton_8.clicked.connect(self.draw_hist)
         self.lineEdit_8.setValidator(sci_validator)
+        # 事例数比例设置
         self.lineEdit_8.editingFinished.connect(self.proportion)
-        self.comboBox.addItems(["单高斯拟合", "双高斯拟合"])
+        self.comboBox.addItems(["单高斯拟合", "全局拟合", "全局拟合(含噪声)"])
+        # 引出拟合参数设置对话框
         self.pushButton_6.clicked.connect(self.set_fit_param)
+        # 绘制拟合曲线
         self.pushButton_7.clicked.connect(self.refresh)
         self.checkBox.toggled.connect(self.refresh)
+        # checkBox
         self.checkBox_2.toggled.connect(self.refresh)
-        self.checkBox_3.toggled.connect(self.refresh)
+        self.checkBox_3.stateChanged.connect(self.refresh)
+        self.checkBox_4.toggled.connect(self.refresh)
 
         # var
         self.files_list = []
         self.spe = []
         self.hist = []
-        self.fit = {"model": None, "param": None}
+        self.fit = {"model": Fit.NoFit, "param": None}
 
         # Canvas
         self.canvas = MatPlotCanvas(self, width=5, height=5)
@@ -69,16 +78,24 @@ class CallUiSPE(Ui_Form, QWidget):
         canvas_size_policy.setHorizontalStretch(0)
         canvas_size_policy.setVerticalStretch(2)
         self.canvas.setSizePolicy(canvas_size_policy)
-        self.gridLayout_6.addWidget(self.tool_bar, 2, 0, 1, 1)
-        self.gridLayout_6.addWidget(self.canvas, 3, 0, 1, 1)
+        self.gridLayout_5.addWidget(self.tool_bar, 1, 0, 1, 1)
+        self.gridLayout_5.addWidget(self.canvas, 2, 0, 1, 1)
 
     def switch_hist_setting(self, status: bool, clear: bool = False):
-        if clear is True and self.lineEdit_6.isEnabled():
+        if clear is True:
             self.lineEdit_6.clear()
             self.lineEdit_7.clear()
         self.lineEdit_6.setEnabled(status)
         self.lineEdit_7.setEnabled(status)
         self.pushButton_8.setEnabled(status)
+
+    def switch_bin_setting(self):
+        print("enter radio")
+        if self.radioButton.isChecked():
+            self.switch_hist_setting(False, True)
+            self.pushButton_8.setEnabled(True)
+        else:
+            self.switch_hist_setting(True)
 
     def switch_fit_setting(self, status: bool):
         self.comboBox.setEnabled(status)
@@ -86,7 +103,7 @@ class CallUiSPE(Ui_Form, QWidget):
         self.pushButton_7.setEnabled(status)
 
     def switch_portion(self, status: bool, clear: bool = False):
-        if clear is True and self.lineEdit_8.isEnabled():
+        if clear is True:
             self.lineEdit_8.clear()
             self.lineEdit_9.clear()
             self.lineEdit_10.clear()
@@ -101,6 +118,73 @@ class CallUiSPE(Ui_Form, QWidget):
         self.checkBox.setEnabled(status)
         self.checkBox_2.setEnabled(status)
         self.checkBox_3.setEnabled(status)
+        self.checkBox_4.setEnabled(status)
+
+    def switch_fit_conclusion(self, model = Fit.NoFit, *param):
+        if model == Fit.NoFit:
+            self.label_16.setText("None")
+            self.label_17.setText("w：")
+            self.label_18.setText("None")
+            self.label_22.setText("alpha：")
+            self.label_19.setText("None")
+            self.label_20.setText("mu：")
+            self.label_21.setText("None")
+            self.label_26.setText("q0：")
+            self.label_23.setText("None")
+            self.label_24.setText("sigma0：")
+            self.label_25.setText("None")
+            self.label_30.setText("q1：")
+            self.label_27.setText("None")
+            self.label_28.setText("sigma1：")
+            self.label_29.setText("None")
+        if model == Fit.Gauss and len(param) == 3:
+            self.label_16.setText("{}".format(param[0]))
+            self.label_17.setText("q0：")
+            self.label_18.setText("{}".format(param[1]))
+            self.label_22.setText("sigma0：")
+            self.label_19.setText("{}".format(param[2]))
+            self.label_20.setVisible(False)
+            self.label_21.setVisible(False)
+            self.label_26.setVisible(False)
+            self.label_23.setVisible(False)
+            self.label_24.setVisible(False)
+            self.label_25.setVisible(False)
+            self.label_30.setVisible(False)
+            self.label_27.setVisible(False)
+            self.label_28.setVisible(False)
+            self.label_29.setVisible(False)
+        if model == Fit.Global and len(param) == 6:
+            self.label_16.setText("{}".format(param[0]))
+            self.label_17.setText("mu：")
+            self.label_18.setText("{}".format(param[1]))
+            self.label_22.setText("q0：")
+            self.label_19.setText("{}".format(param[2]))
+            self.label_20.setText("sigma0：")
+            self.label_21.setText("{}".format(param[3]))
+            self.label_26.setText("q1：")
+            self.label_23.setText("{}".format(param[4]))
+            self.label_24.setText("sigma1：")
+            self.label_25.setText("{}".format(param[5]))
+            self.label_30.setVisible(False)
+            self.label_27.setVisible(False)
+            self.label_28.setVisible(False)
+            self.label_29.setVisible(False)
+        if model == Fit.Global and len(param) == 8:
+            self.label_16.setText("{}".format(param[0]))
+            self.label_17.setText("w：")
+            self.label_18.setText("{}".format(param[1]))
+            self.label_22.setText("alpha：")
+            self.label_19.setText("{}".format(param[2]))
+            self.label_20.setText("mu：")
+            self.label_21.setText("{}".format(param[3]))
+            self.label_26.setText("q0：")
+            self.label_23.setText("{}".format(param[4]))
+            self.label_24.setText("sigma0：")
+            self.label_25.setText("{}".format(param[5]))
+            self.label_30.setText("q1：")
+            self.label_27.setText("{}".format(param[6]))
+            self.label_28.setText("sigma1：")
+            self.label_29.setText("{}".format(param[7]))
 
     def add_files(self):
         files, filetype = QFileDialog.getOpenFileNames(parent=self, caption="添加文件",
@@ -114,10 +198,6 @@ class CallUiSPE(Ui_Form, QWidget):
             slm = QStringListModel()
             slm.setStringList(base_name)
             self.listView.setModel(slm)
-            self.switch_hist_setting(True)
-            if self.checkBox.isChecked():
-                self.lineEdit_6.setEnabled(False)
-                self.lineEdit_7.setEnabled(False)
 
     def remove_file(self):
         qmi = self.listView.currentIndex()
@@ -130,6 +210,7 @@ class CallUiSPE(Ui_Form, QWidget):
             slm = QStringListModel()
             slm.setStringList(base_name)
             self.listView.setModel(slm)
+            self.pushButton_8.setEnabled(False)
 
     def clear_listview(self):
         self.files_list.clear()
@@ -139,61 +220,76 @@ class CallUiSPE(Ui_Form, QWidget):
         self.switch_hist_setting(False, True)
         self.switch_graph_setting(False)
         self.switch_portion(False, True)
+        self.switch_fit_setting(False)
 
     def show_file_info(self, index: QModelIndex):
         file = self.files_list[index.row()]
+        if index.row() != -1:
+            self.pushButton_8.setEnabled(True)
         pd_data = DataSetTool.read_file(file)
         self.lineEdit_2.setText(os.path.basename(file))
         self.lineEdit.setText(os.path.dirname(file))
         self.lineEdit_3.setText(str(len(pd_data)) + " X " + str(len(pd_data.columns)))
         self.lineEdit_4.setText(str(format(os.path.getsize(file) / 1024, '.2f')) + " kB")
-        self.fit["model"] = None
-
-    def switch_bin_setting(self):
-        print("enter radio")
-        if self.radioButton.isChecked():
-            self.switch_hist_setting(False)
-            self.pushButton_8.setEnabled(True)
-        else:
-            self.switch_hist_setting(True)
+        self.fit["model"] = Fit.NoFit
 
     def draw_hist(self):
         self.canvas.ax.cla()
         self.canvas.ax.grid(True)
+        # 清空成员变量中spe列表内容和hist的列表内容
+        # 列表中存储这后续将要绘制，或者拟合的电子谱图
         self.spe.clear()
         self.hist.clear()
         scale = float(self.lineEdit_5.text())
         bound = []
-        for i in self.listView.selectedIndexes():
-            spe = SinglePhotonSpectrum(DataSetTool.read_file(self.files_list[i.row()]), scale)
-            self.spe.append(spe)
-            bound.append(spe.get_info(spe.get_scale())["min"])
-            bound.append(spe.get_info(spe.get_scale())["max"])
-        default_bins = np.linspace(np.array(bound).min(), np.array(bound).max(), 301)
-        print("default bin: {}".format(default_bins))
-        if self.radioButton.isChecked():
-            for i in self.spe:
-                self.hist.append(SpeHist(i.get_charge(), default_bins, scale))
-        else:
-            print("custom bin!!!")
-            comma2interval = DataSetTool.comma2interval(self.lineEdit_6.text())
-            if comma2interval[0]:
-                print(comma2interval)
-                custom_bin = np.linspace(comma2interval[1], comma2interval[2], int(self.lineEdit_7.text()) + 1)
+        # 判断在listView中是否有文件被选中
+        if len(self.listView.selectedIndexes()) != 0:
+            for i in self.listView.selectedIndexes():
+                spe = SinglePhotonSpectrum(DataSetTool.read_file(self.files_list[i.row()]), scale)
+                self.spe.append(spe)
+                bound.append(spe.get_info(spe.get_scale())["min"])
+                bound.append(spe.get_info(spe.get_scale())["max"])
+            default_bins = np.linspace(np.array(bound).min(), np.array(bound).max(), 301)
+            print("default bin: {}".format(default_bins))
+            if self.radioButton.isChecked():
+                # 默认bins
                 for i in self.spe:
-                    self.hist.append(SpeHist(i.get_charge(), custom_bin, scale))
+                    self.hist.append(SpeHist(i.get_charge(), default_bins, scale))
             else:
-                QMessageBox.warning(None, "警告", "区间设置错误", QMessageBox.Ok)
-        for i in self.hist:
-            self.canvas.ax.hist(i.get_scatter()[0], i.get_hist()[1], weights=i.get_hist()[0])
-        self.canvas.draw()
-        self.switch_graph_setting(True)
-        if len(self.spe) == 1:
-            self.switch_fit_setting(True)
-            self.switch_portion(True, True)
+                # 自定义bins
+                comma2interval = DataSetTool.comma2interval(self.lineEdit_6.text())
+                if comma2interval[0] and self.lineEdit_7.text() != "":      # bins填写正确
+                    print(comma2interval)
+                    custom_bin = np.linspace(comma2interval[1], comma2interval[2], int(self.lineEdit_7.text()) + 1)
+                    for i in self.spe:
+                        self.hist.append(SpeHist(i.get_charge(), custom_bin, scale))
+                else:
+                    # bin填写错误
+                    QMessageBox.warning(None, "警告", "区间设置错误", QMessageBox.Ok)
+            for i in self.hist:
+                if self.checkBox.isEnabled() and not self.checkBox.isChecked():
+                    self.canvas.ax.hist(i.get_scatter()[0], i.get_hist()[1], weights=i.get_hist()[0], histtype="step")
+                else:
+                    self.canvas.ax.hist(i.get_scatter()[0], i.get_hist()[1], weights=i.get_hist()[0])
+            self.canvas.draw()
+            self.switch_graph_setting(True)
+            # 判断一个图谱还是多个图谱， 多个图谱fit控件关闭， 一个谱图fit控件开启
+            if len(self.spe) == 1:
+                self.switch_fit_setting(True)
+                self.switch_portion(True, True)
+                self.checkBox.setEnabled(True)
+                self.checkBox_4.setEnabled(False)
+                self.checkBox_2.setEnabled(True)
+                self.checkBox_3.setEnabled(False)
+            else:
+                self.switch_fit_setting(False)
+                self.switch_portion(False, True)
+                self.checkBox.setEnabled(True)
+                self.checkBox_4.setEnabled(True)
+                self.checkBox_2.setEnabled(False)
+                self.checkBox_3.setEnabled(False)
         else:
-            self.switch_fit_setting(False)
-            self.switch_portion(False, True)
+            QMessageBox.warning(None, "警告", "未选择任何文件", QMessageBox.Ok)
 
     def proportion(self):
         threshold = float(self.lineEdit_8.text())
@@ -209,96 +305,129 @@ class CallUiSPE(Ui_Form, QWidget):
             dialog.out_message.connect(self.fitting)
             dialog.show()
         elif self.comboBox.currentIndex() == 1:
-            dialog = FitDialog(self, Fit.DoubleGauss)
+            dialog = FitDialog(self, Fit.Global)
+            dialog.out_message.connect(self.fitting)
+            dialog.show()
+        elif self.comboBox.currentIndex() == 2:
+            dialog = FitDialog(self, Fit.GlobalNoise)
             dialog.out_message.connect(self.fitting)
             dialog.show()
         else:
             QMessageBox.warning(None, "警告", "拟合选项错误", QMessageBox.Ok)
 
     def fitting(self, dict_data: dict):
-        self.fit["model"] = None
-        print("Enter fit")
-        if dict_data["accept"] is True:
+        self.fit["model"] = Fit.NoFit
+        print(dict_data["model"])
+        if dict_data["model"] == Fit.Gauss:
             flag, interval1, interval2 = DataSetTool.comma2interval(dict_data["interval"])
-            if dict_data["model"] == Fit.Gauss and len(self.hist) != 0 and flag:
-                print("param setting: {}".format(dict_data))
-                ppot, pcov = self.hist[0].fit_spe(dict_data["model"], interval1, interval2, float(dict_data["p1"]),
-                                                  float(dict_data["p2"]), float(dict_data["p3"]))
-                self.fit["param"] = ppot
-                self.fit["model"] = Fit.Gauss
-                # debug
-                # f, a = plt.subplots()
-                # xx = np.linspace(-2, 2, 1000)
-                # a.plot(xx, SpeHist.gauss(xx, *ppot))
-                # plt.show()
-            elif dict_data["model"] == Fit.DoubleGauss and len(self.hist) != 0 and flag:
-                ppot, pcov = self.hist[0].fit_spe(dict_data["model"], interval1, interval2, float(dict_data["p5"]),
-                                                  float(dict_data["p0"]), float(dict_data["p1"]), float(dict_data["p2"]),
-                                                  float(dict_data["p3"]), float(dict_data["p4"]))
-                self.fit["param"] = ppot
-                self.fit["model"] = Fit.DoubleGauss
-            else:
-                print("Fit is wrong")
-            print("拟合参数为：\n{}".format(self.fit["param"]))
-            self.out_message.emit("拟合参数为：\n{}".format(self.fit["param"]))
+        if dict_data["model"] == Fit.Gauss and len(self.hist) == 1 and flag:
+            print("param setting: {}".format(dict_data))
+            fit_par, fit_cov = self.hist[0].fit_spe(dict_data["model"], interval1, interval2, *dict_data["param"])
+            self.fit["param"] = fit_par
+            self.fit["model"] = Fit.Gauss
+            self.switch_fit_conclusion(self.fit["model"], *fit_par)
+        elif dict_data["model"] == Fit.Global and len(self.hist) == 1:
+            fit_par, fit_cov = self.hist[0].fit_spe(dict_data["model"], 1, 1, *dict_data["param"])
+            self.fit["param"] = fit_par
+            self.fit["model"] = Fit.Global
+            self.switch_fit_conclusion(self.fit["model"], *fit_par)
+        elif dict_data["model"] == Fit.GlobalNoise and len(self.hist) == 1:
+            fit_par, fit_cov = self.hist[0].fit_spe(dict_data["model"], 1, 1, *dict_data["param"])
+            self.fit["param"] = fit_par
+            self.fit["model"] = Fit.GlobalNoise
+            self.switch_fit_conclusion(self.fit["model"], *fit_par)
         else:
             print("Fit is wrong")
+        print("拟合参数为：\n{}".format(self.fit["param"]))
+        if self.fit["model"] != Fit.NoFit:
+            # 开启hist控件， 关闭归一化控件， 开启散点控件， 开启fit控件
+            self.checkBox.setEnabled(True)
+            self.checkBox_4.setEnabled(False)
+            self.checkBox_2.setEnabled(True)
+            self.checkBox_3.setEnabled(True)
+        self.out_message.emit("拟合参数为：\n{}".format(self.fit["param"]))
 
     def collect_param(self):
-        print("Enter collection")
         print(self.fit)
-        collection = {"hist": False, "scatter": False, "fitting": False}
-        if self.checkBox.isEnabled():
-            if self.checkBox.isChecked():
-                collection["hist"] = True
+        collection = {"hist": False, "normal": False, "scatter": False, "fitting": 0}
+        if self.checkBox.isEnabled() and self.checkBox.isChecked():
+            collection["hist"] = True
             print("hist status: {}".format(collection["hist"]))
-            if self.checkBox_2.isChecked():
-                collection["scatter"] = True
+        if self.checkBox_4.isEnabled() and self.checkBox_4.isChecked():
+            collection["normal"] = True
+        if self.checkBox_2.isEnabled() and self.checkBox_2.isChecked():
+            collection["scatter"] = True
             print("scatter status: {}".format(collection["scatter"]))
+        if self.checkBox_3.isEnabled() and self.checkBox_3.isChecked() and self.fit["model"] != Fit.NoFit:
+            collection["fitting"] = self.checkBox_3.checkState()
             print("fit model: {}".format(self.fit["model"]))
-            if self.checkBox_3.isChecked() and self.fit["model"] is not None:
-                collection["fitting"] = True
-                print("fitting status: {}".format(collection["fitting"]))
-            return collection
-        else:
-            return None
+        return collection
 
     def refresh(self):
         print("Enter refresh fun")
         self.canvas.ax.cla()
         self.canvas.ax.grid(True)
         collection = self.collect_param()
-        print(collection)
-        if collection is not None and len(self.hist) != 0:
-            print(collection["hist"])
+        print("collection parameters: {}".format(collection))
+        if len(self.hist) != 0:
+            # 直方图checkBox检测
             if collection["hist"] is True:
                 for i in self.hist:
-                    self.canvas.ax.hist(i.get_scatter()[0], i.get_hist()[1], weights=i.get_hist()[0])
+                    # 归一化checkBox检测
+                    if collection["normal"] is True:
+                        self.canvas.ax.hist(i.get_scatter()[0], i.get_hist()[1],
+                                            weights=(i.get_hist()[0] / i.get_hist()[0].sum()))
+                    else:
+                        self.canvas.ax.hist(i.get_scatter()[0], i.get_hist()[1], weights=i.get_hist()[0])
             else:
                 for i in self.hist:
-                    self.canvas.ax.hist(i.get_scatter()[0], i.get_hist()[1], weights=i.get_hist()[0], histtype="step")
+                    # 归一化checkBox检测
+                    if collection["normal"] is False:
+                        self.canvas.ax.hist(i.get_scatter()[0], i.get_hist()[1], weights=i.get_hist()[0],
+                                            histtype="step")
+                    else:
+                        self.canvas.ax.hist(i.get_scatter()[0], i.get_hist()[1],
+                                            weights=(i.get_hist()[0] / i.get_hist()[0].sum()), histtype="step")
+            # 散点checkBox检测
             if collection["scatter"] is True:
                 for i in self.hist:
                     self.canvas.ax.scatter(i.get_scatter()[0], i.get_scatter()[1])
-            if collection["fitting"] is True and self.fit["model"] is not None:
-                xx = self.hist[0].get_scatter()[0]
-                if self.fit["model"] == Fit.Gauss:
-                    self.canvas.ax.plot(xx, self.hist[0].gauss(xx, *self.fit["param"]))
-                    # debug
-                    # f, a = plt.subplots()
-                    # a.plot(xx, self.hist[0].gauss(xx, *self.fit["param"]))
-                    # plt.show()
-                if self.fit["model"] == Fit.DoubleGauss:
-                    self.canvas.ax.plot(xx, self.hist[0].model_double_gauss(xx, *self.fit["param"]))
+            if collection["fitting"] != 0 and self.fit["model"] != Fit.NoFit:
+                self.draw_fit(self.checkBox_3.checkState())
             self.canvas.draw()
 
-    def show_message(self, message: str):
-        self.textBrowser.append(message)
+    def draw_fit(self, check_status: int = 0):
+        if self.fit["model"] != Fit.NoFit:
+            x = self.hist[0].get_scatter()[0]
+            if self.fit["model"] == Fit.Gauss and (check_status == 1 or check_status == 2):
+                self.canvas.ax.plot(x, SpeHist.gauss(x, *self.fit["param"]))
+            if self.fit["model"] == Fit.Global:
+                self.canvas.ax.plot(x, SpeHist.global_model(x, *self.fit["param"]))
+                if check_status == 2:
+                    par = self.fit["param"]
+                    self.canvas.ax.plot(x, par[0] * SpeHist.s_ped(x, par[1], par[2], par[3]))
+                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 1))
+                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 2))
+                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 3))
+                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 4))
+                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 5))
+            if self.fit["model"] == Fit.GlobalNoise:
+                self.canvas.ax.plot(x, SpeHist.global_noise_model(x, *self.fit["param"]))
+                if check_status == 2:
+                    par = self.fit["param"]
+                    self.canvas.ax.plot(x, par[0] * (1 - par[1]) * SpeHist.s_ped(x, par[3], par[4], par[5]))
+                    self.canvas.ax.plot(x, par[0] * par[1] * SpeHist.poisson(0, par[3]) * SpeHist.noise_exp(x, par[2], par[4]))
+                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 1, par[1] / par[2]))
+                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 2, par[1] / par[2]))
+                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 3, par[1] / par[2]))
+                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 4, par[1] / par[2]))
+                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 5, par[1] / par[2]))
+        else:
+            pass
 
 
 if __name__ == "__main__":
     import sys
-
     app = QApplication(sys.argv)
     win = CallUiSPE()
     win.show()
