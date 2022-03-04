@@ -3,6 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PmtConstant import Extremum
 from PmtConstant import Fit
+import numpy as np
 
 
 class ExtremumDialog(QDialog):
@@ -61,7 +62,7 @@ class TriggerDialog(QDialog):
 
     def __init__(self, parent=None):
         super(TriggerDialog, self).__init__(parent)
-        self.data = {"threshold": None, "interval": "0e0, 0e0"}
+        self.data = {"threshold": None, "interval": "0, 0"}
         self.setWindowTitle("触发阈值设置")
         self.layout = QVBoxLayout(self)
         self.label1 = QLabel("触发阈值(V)：")
@@ -107,46 +108,53 @@ class FitDialog(QDialog):
 
     def __init__(self, parent=None, model=Fit.Gauss):
         super(FitDialog, self).__init__(parent)
-        self.data_dict = {"accept": False, "p0": None, "p1": None, "p2": None, "p3": None, "p4": None, "p5": None,
-                          "interval": None, "model": None}
+        self.data_dict = dict()
+        self.data_dict["model"] = Fit.NoFit
+        self.data_dict["param"] = []
+        self.data_dict["interval"] = ""
         layout = QVBoxLayout(self)
         self.model = model
         if self.model == Fit.Gauss:
-            self.formula = QLabel("p1 * Gauss(x, p2, p3)")
+            self.formula = QLabel("amp * Gauss(x, q0, sigma0)")
+        elif self.model == Fit.Global:
+            self.formula = QLabel("amp * {Poisson(0, mu) * Gauss(x, q0, sigma0) + Poisson(1, mu) * Gauss(x, q0 + q1, "
+                                  "sigma1)}")
+        elif self.model == Fit.GlobalNoise:
+            self.formula = QLabel("公式较为复杂，暂时不给予展示")
         else:
-            self.formula = QLabel("P5 * {Poisson(0, p0) * Gauss(x, p1, p2) + Poisson(1, p0) * Gauss(x, p3, p4)}")
-
-            self.formula.setAlignment(Qt.AlignCenter)
+            self.formula = QLabel("拟合模型类型错误，清检查代码")
+        self.formula.setAlignment(Qt.AlignCenter)
 
         self.interval = QLabel("拟合区间")
         self.int_edit = QLineEdit()
-        self.p0 = QLabel("参数p0: ")
-        self.p1 = QLabel("参数p1: ")
-        self.p2 = QLabel("参数p2: ")
-        self.p3 = QLabel("参数p3: ")
-        self.p4 = QLabel("参数p4: ")
-        self.p5 = QLabel("参数p5: ")
-        self.p0_edit = QLineEdit()
-        self.p1_edit = QLineEdit()
-        self.p2_edit = QLineEdit()
-        self.p3_edit = QLineEdit()
-        self.p4_edit = QLineEdit()
-        self.p5_edit = QLineEdit()
+        self.amp = QLabel("参数amp: ")
+        self.w = QLabel("参数w: ")
+        self.alpha = QLabel("参数alpha: ")
+        self.mu = QLabel("参数mu: ")
+        self.q0 = QLabel("参数q0: ")
+        self.sigma0 = QLabel("参数sigma0: ")
+        self.q1 = QLabel("参数q1: ")
+        self.sigma1 = QLabel("参数sigma1: ")
+        self.amp_edit = QLineEdit()
+        self.w_edit = QLineEdit()
+        self.alpha_edit = QLineEdit()
+        self.mu_edit = QLineEdit()
+        self.q0_edit = QLineEdit()
+        self.sigma0_edit = QLineEdit()
+        self.q1_edit = QLineEdit()
+        self.sigma1_edit = QLineEdit()
         self.fit_button = QPushButton("拟合")
         self.cancel_button = QPushButton("取消")
         form = QFormLayout(self)
         form.addRow(self.interval, self.int_edit)
-        if self.model == Fit.Gauss:
-            form.addRow(self.p1, self.p1_edit)
-            form.addRow(self.p2, self.p2_edit)
-            form.addRow(self.p3, self.p3_edit)
-        else:
-            form.addRow(self.p0, self.p0_edit)
-            form.addRow(self.p1, self.p1_edit)
-            form.addRow(self.p2, self.p2_edit)
-            form.addRow(self.p3, self.p3_edit)
-            form.addRow(self.p4, self.p4_edit)
-            form.addRow(self.p5, self.p5_edit)
+        form.addRow(self.amp, self.amp_edit)
+        form.addRow(self.w, self.w_edit)
+        form.addRow(self.alpha, self.alpha_edit)
+        form.addRow(self.mu, self.mu_edit)
+        form.addRow(self.q0, self.q0_edit)
+        form.addRow(self.sigma0, self.sigma0_edit)
+        form.addRow(self.q1, self.q1_edit)
+        form.addRow(self.sigma1, self.sigma1_edit)
 
         btn_layout = QHBoxLayout(self)
         btn_layout.addWidget(self.fit_button)
@@ -154,50 +162,104 @@ class FitDialog(QDialog):
         layout.addWidget(self.formula)
         layout.addLayout(form)
         layout.addLayout(btn_layout)
+        # 按键绑定信号发射
         self.fit_button.clicked.connect(self.emit_param)
         self.cancel_button.clicked.connect(self.close)
+        # 对输入框设置正则表达筛选器
         interval_reg = QRegExpValidator(self)
         reg = QRegExp(r"^(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)\s*,"
                       r"\s*(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)")
         interval_reg.setRegExp(reg)
-        sci_validator = QRegExpValidator(self)
-        sci_reg = QRegExp(r"^(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)")
-        sci_validator.setRegExp(sci_reg)
+        fit_param_validator = QRegExpValidator(self)
+        fit_param_reg = QRegExp(r"^(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)\s*,"
+                                r"\s*(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)\s*,"
+                                r"\s*(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)")
+        fit_param_validator.setRegExp(fit_param_reg)
         self.int_edit.setValidator(interval_reg)
-        self.p1_edit.setValidator(sci_validator)
-        self.p2_edit.setValidator(sci_validator)
-        self.p3_edit.setValidator(sci_validator)
+        self.amp_edit.setValidator(fit_param_validator)
+        self.w_edit.setValidator(fit_param_validator)
+        self.alpha_edit.setValidator(fit_param_validator)
+        self.mu_edit.setValidator(fit_param_validator)
+        self.q0_edit.setValidator(fit_param_validator)
+        self.sigma0_edit.setValidator(fit_param_validator)
+        self.q1_edit.setValidator(fit_param_validator)
+        self.sigma1_edit.setValidator(fit_param_validator)
+        # 对不同模型隐藏不同参数
+        self.interval.setVisible(False)
+        self.int_edit.setVisible(False)
+        if self.model == Fit.Global or self.model == Fit.Gauss:
+            self.w.setVisible(False)
+            self.w_edit.setVisible(False)
+            self.alpha.setVisible(False)
+            self.alpha_edit.setVisible(False)
+            if self.model == Fit.Gauss:
+                self.interval.setVisible(True)
+                self.int_edit.setVisible(True)
+                self.mu.setVisible(False)
+                self.mu_edit.setVisible(False)
+                self.q1.setVisible(False)
+                self.q1_edit.setVisible(False)
+                self.sigma1.setVisible(False)
+                self.sigma1_edit.setVisible(False)
+
+    def append_param(self, param: list, param_text: str):
+        tmp_param = param_text.split(",")
+        if len(tmp_param) == 1:
+            param.append([float(param_text), -np.inf, np.inf])
+        elif len(tmp_param) == 3:
+            param.append([float(tmp_param[0]), float(tmp_param[1]), float(tmp_param[2])])
+        else:
+            QMessageBox.warning(None, "警告", "参数错误", QMessageBox.Ok)
 
     def emit_param(self):
+        self.data_dict["param"].clear()
         if self.model == Fit.Gauss:
-            if self.p1_edit.text() == "" or self.p2_edit.text() == "" or self.p3_edit.text() == "" or \
-               self.int_edit.text() == "":
+            # 拟合模型为高斯函数时
+            if self.amp_edit.text() == "" or self.q0_edit.text() == "" or self.sigma0_edit.text() == "" or \
+               self.int_edit.text() == 0 or len(self.int_edit.text().split(",")) != 2:
+                # 判断参数的输入是否有误
                 QMessageBox.warning(None, "警告", "参数未完成", QMessageBox.Ok)
             else:
-                self.data_dict["accept"] = True
-                self.data_dict["p1"] = self.p1_edit.text()
-                self.data_dict["p2"] = self.p2_edit.text()
-                self.data_dict["p3"] = self.p3_edit.text()
-                self.data_dict["interval"] = self.int_edit.text()
+                # 将lineEdit内的字符转化为[par, bounds1, bounds2]的list形式，并且append到字典
+                # data_dict["param"]的list中，形成二维list
                 self.data_dict["model"] = Fit.Gauss
+                self.data_dict["interval"] = self.int_edit.text()
+                self.append_param(self.data_dict["param"], self.amp_edit.text())
+                self.append_param(self.data_dict["param"], self.q0_edit.text())
+                self.append_param(self.data_dict["param"], self.sigma0_edit.text())
                 self.out_message.emit(self.data_dict)
                 print(self.data_dict)
                 self.close()
-        else:
-            if self.p0_edit.text() == "" or self.p1_edit.text() == "" or self.p2_edit.text() == "" or \
-               self.p3_edit.text() == "" or self.p4_edit.text() == "" or self.p5_edit.text() == "" or \
-               self.int_edit.text() == "":
+        if self.model == Fit.Global:
+            if self.amp_edit.text() == "" or self.mu_edit.text() == "" or self.q0_edit.text() == "" or \
+               self.sigma0_edit.text() == "" or self.q1_edit.text() == "" or self.sigma1_edit.text() == "":
                 QMessageBox.warning(None, "警告", "参数未完成", QMessageBox.Ok)
             else:
-                self.data_dict["accept"] = True
-                self.data_dict["p0"] = self.p0_edit.text()
-                self.data_dict["p1"] = self.p1_edit.text()
-                self.data_dict["p2"] = self.p2_edit.text()
-                self.data_dict["p3"] = self.p3_edit.text()
-                self.data_dict["p4"] = self.p4_edit.text()
-                self.data_dict["p5"] = self.p5_edit.text()
-                self.data_dict["interval"] = self.int_edit.text()
-                self.data_dict["model"] = Fit.DoubleGauss
+                self.data_dict["model"] = Fit.Global
+                self.append_param(self.data_dict["param"], self.amp_edit.text())
+                self.append_param(self.data_dict["param"], self.mu_edit.text())
+                self.append_param(self.data_dict["param"], self.q0_edit.text())
+                self.append_param(self.data_dict["param"], self.sigma0_edit.text())
+                self.append_param(self.data_dict["param"], self.q1_edit.text())
+                self.append_param(self.data_dict["param"], self.sigma1_edit.text())
+                self.out_message.emit(self.data_dict)
+                print(self.data_dict)
+                self.close()
+        if self.model == Fit.GlobalNoise:
+            if self.amp_edit.text() == "" or self.w_edit.text() == "" or self.alpha_edit.text() == "" or \
+               self.mu_edit.text() == "" or self.q0_edit.text() == "" or self.sigma0_edit.text() == "" or \
+               self.q1_edit.text() == "" or self.sigma1_edit.text() == "":
+                QMessageBox.warning(None, "警告", "参数未完成", QMessageBox.Ok)
+            else:
+                self.data_dict["model"] = Fit.GlobalNoise
+                self.append_param(self.data_dict["param"], self.amp_edit.text())
+                self.append_param(self.data_dict["param"], self.w_edit.text())
+                self.append_param(self.data_dict["param"], self.alpha_edit.text())
+                self.append_param(self.data_dict["param"], self.mu_edit.text())
+                self.append_param(self.data_dict["param"], self.q0_edit.text())
+                self.append_param(self.data_dict["param"], self.sigma0_edit.text())
+                self.append_param(self.data_dict["param"], self.q1_edit.text())
+                self.append_param(self.data_dict["param"], self.sigma1_edit.text())
                 self.out_message.emit(self.data_dict)
                 print(self.data_dict)
                 self.close()
@@ -206,6 +268,6 @@ class FitDialog(QDialog):
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    ui = FitDialog(model=Fit.DoubleGauss)
+    ui = FitDialog(model=Fit.Global)
     ui.show()
     sys.exit(app.exec_())
