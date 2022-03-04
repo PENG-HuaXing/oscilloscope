@@ -97,15 +97,15 @@ class SpeHist(object):
         拟合方法，可对指定区域进行gauss拟合，也可以
         对全域进行多种函数的复合拟合。返回数值为元组
         其中包含拟合参数,拟合参数的方差
-        len(param) == 18                len(param) == 24
-        param[0]: amp                   param[0]: amp
-        param[3]: mu					param[3]: w
-        param[6]: q0					param[6]: alpha
-        param[9]: sigma0				param[9]: mu
-        param[12]: q1					param[12]: q0
-        param[15]: sigma1				param[15]: sigma0
-                                        param[18]: q1
-                                        param[21]: sigma1
+        len(param) == 6                 len(param) == 8
+        param[0][0]: amp                param[0][0]: amp
+        param[1][0]: mu					param[1][0]: w
+        param[2][0]: q0					param[2][0]: alpha
+        param[3][0]: sigma0				param[3][0]: mu
+        param[4][0]: q1					param[4][0]: q0
+        param[5][0]: sigma1				param[5][0]: sigma0
+                                        param[6][0]: q1
+                                        param[7][0]: sigma1
         """
         mod = model
         if mod == Fit.Gauss:
@@ -123,7 +123,7 @@ class SpeHist(object):
                                              bounds=list(zip(*bounds)))
                 return fit_par, par_cov
             else:
-                print("参数错误")
+                print("参数错误: {}".format(param))
                 return None, None
         if mod == Fit.Global:
             if len(param) == 6:
@@ -136,7 +136,7 @@ class SpeHist(object):
                                              bounds=list(zip(*bounds)))
                 return fit_par, par_cov
             else:
-                print("参数错误")
+                print("参数错误: {}".format(param))
         if mod == Fit.GlobalNoise:
             if len(param) == 8:
                 par = []
@@ -148,7 +148,7 @@ class SpeHist(object):
                                              bounds=list(zip(*bounds)))
                 return fit_par, par_cov
             else:
-                print("参数错误")
+                print("参数错误: {}".format(param))
 
 
 if __name__ == "__main__":
