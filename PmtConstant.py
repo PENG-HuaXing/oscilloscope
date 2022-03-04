@@ -12,8 +12,10 @@ class Wave(Enum):
 
 class Fit(Enum):
     Gauss = auto()
+    DoubleGauss = auto()
     Global = auto()
     GlobalNoise = auto()
+    NoFit = auto()
 
 
 class AfterPulse(Enum):
