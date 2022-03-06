@@ -1,3 +1,4 @@
+import pandas as pd
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -265,9 +266,74 @@ class FitDialog(QDialog):
                 self.close()
 
 
+class AfterPulseDialog(QDialog):
+    def __init__(self, parent=None):
+        super(AfterPulseDialog, self).__init__(parent)
+        # Dialog初始化
+        self.layout = QVBoxLayout(self)
+        self.form = QFormLayout()
+        self.push0 = QPushButton("选择后脉冲文件")
+        self.push0.clicked.connect(self.select_ap_file)
+        self.line0 = QLineEdit()
+        self.line0.setReadOnly(True)
+        self.label1 = QLabel("信号文件数量:")
+        int_validator = QIntValidator(self)
+        self.line1 = QLineEdit()
+        self.line1.setValidator(int_validator)
+        self.label2 = QLabel("后脉冲阈值：")
+        sci_double_validator = QRegExpValidator(self)
+        reg = QRegExp(r"^(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)")
+        sci_double_validator.setRegExp(reg)
+        self.line2 = QLineEdit()
+        self.line2.setValidator(sci_double_validator)
+        self.label3 = QLabel("脉冲率")
+        self.line3 = QLineEdit()
+        self.line3.setReadOnly(True)
+        self.form.addRow(self.push0, self.line0)
+        self.form.addRow(self.label1, self.line1)
+        self.form.addRow(self.label2, self.line2)
+        self.form.addRow(self.label3, self.line3)
+        self.push_layout = QHBoxLayout()
+        self.push1 = QPushButton("计算")
+        self.push2 = QPushButton("关闭")
+        self.push_layout.addWidget(self.push1)
+        self.push_layout.addWidget(self.push2)
+        self.layout.addLayout(self.form)
+        self.layout.addLayout(self.push_layout)
+
+        self.push1.clicked.connect(self.calculate_apr)
+        self.push2.clicked.connect(self.close)
+
+    def select_ap_file(self):
+        file, filetype = QFileDialog.getOpenFileName(parent=self, caption="后脉冲文件",
+                                                      directory="/mnt/windows_file/DATA/", filter="csvFile (*csv)")
+        if file == "":
+            QMessageBox.warning(self, "警告", "未选择任何文件", QMessageBox.Ok)
+        else:
+            self.line0.setText(file)
+
+    def calculate_apr(self):
+        try:
+            file_num = int(self.line1.text())
+            threshold = float(self.line2.text())
+            pd_data = pd.read_csv(self.line0.text())
+            print(file_num, threshold)
+            print(pd_data)
+            filter_data = pd_data[pd_data["Q"] < threshold]
+            ap_file_no_duplicate = []
+            for i in filter_data["File"]:
+                if i in ap_file_no_duplicate:
+                    pass
+                else:
+                    ap_file_no_duplicate.append(i)
+            self.line3.setText(format(len(ap_file_no_duplicate) / file_num, ".4f"))
+        except:
+            QMessageBox.warning(self, "警告", "数值设置错误", QMessageBox.Ok)
+
+
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    ui = FitDialog(model=Fit.Global)
+    ui = AfterPulseDialog()
     ui.show()
     sys.exit(app.exec_())
