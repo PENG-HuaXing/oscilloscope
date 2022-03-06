@@ -326,7 +326,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
         save_file = self.lineEdit_10.text()
         pd_data = pd.DataFrame(data, columns=col)
         if DataSetTool.check_file(os.path.dirname(save_file)):
-            pd_data.to_csv(save_file)
+            pd_data.to_csv(save_file, index=False)
 
     def draw_wave(self, index: QModelIndex):
         self.canvas.ax.cla()
