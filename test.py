@@ -14,10 +14,12 @@ class Test(QWidget):
         self.push2 = QPushButton("Enable")
         self.push3 = QPushButton("Clear")
         self.push4 = QPushButton("Disable Check")
+        self.push5 = QPushButton("read line Edit")
         self.push.clicked.connect(self.disable)
         self.push2.clicked.connect(self.enable)
         self.push3.clicked.connect(self.clear)
         self.push4.clicked.connect(self.disable_check)
+        self.push5.clicked.connect(self.read)
         # self.check.toggled.connect(self.check_status)
         self.check.stateChanged.connect(self.check_status)
         layout.addWidget(self.line)
@@ -26,6 +28,7 @@ class Test(QWidget):
         layout.addWidget(self.push2)
         layout.addWidget(self.push3)
         layout.addWidget(self.push4)
+        layout.addWidget(self.push5)
 
     def check_status(self):
         print("check status: {}".format(self.check.checkState()))
@@ -46,6 +49,10 @@ class Test(QWidget):
 
     def clear(self):
         self.line.clear()
+
+    def read(self):
+        print("读取lineEdit内容为： {}".format(self.line.text()))
+        print("check 状态: {}".format(self.check.isChecked()))
 
 
 if __name__ == "__main__":
