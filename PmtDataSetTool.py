@@ -134,6 +134,31 @@ class DataSetTool(object):
         else:
             print("文件夹不存在")
 
+    @staticmethod
+    def read_qdc(file: str, channel: int = 1):
+        file_name = file
+        if DataSetTool.check_file(file_name):
+            pd_data = pd.read_table(file)
+            hist_content = pd_data.iloc[:, channel]
+            bin = 0.5
+            qdc = []
+            for i in hist_content:
+                for j in range(int(i)):
+                    qdc.append(bin)
+                bin += 1
+            return np.array(qdc)
+        else:
+            return np.array([])
+
+    @staticmethod
+    def qdc_bins(a: int, b: int):
+        if a < b:
+            return np.linspace(a, b, (b - a) + 1)
+        else:
+            print("参数错误")
+            return np.array([])
+
+
 
 if __name__ == "__main__":
     # t, a = DataSetTool.read_wave("C4--w--07002.csv")
@@ -144,4 +169,5 @@ if __name__ == "__main__":
     # print(a)
     # DataSetTool.convert_spe2txt("/run/media/einstein/Elements/2022_2_25_CR160_data/windows_0_250ns_spe.csv")
     DataSetTool.convert_qdc2txt("/run/media/einstein/Elements/CR160_SPE/2022.01.17/CR160_-1450V_LED_1KHz_3.7V_32ns_V965_CH1.txt", 1, "histogram_qdc.txt")
+    print(DataSetTool.qdc_bins(900.5, 1000.5))
 
