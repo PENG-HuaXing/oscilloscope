@@ -228,9 +228,12 @@ class FitDialog(QDialog):
                 self.append_param(self.data_dict["param"], self.amp_edit.text())
                 self.append_param(self.data_dict["param"], self.q0_edit.text())
                 self.append_param(self.data_dict["param"], self.sigma0_edit.text())
-                self.out_message.emit(self.data_dict)
-                print(self.data_dict)
-                self.close()
+                if len(self.data_dict["param"]) == 3:
+                    self.out_message.emit(self.data_dict)
+                    print(self.data_dict)
+                    self.close()
+                else:
+                    print("参数错误")
         if self.model == Fit.Global:
             if self.amp_edit.text() == "" or self.mu_edit.text() == "" or self.q0_edit.text() == "" or \
                self.sigma0_edit.text() == "" or self.q1_edit.text() == "" or self.sigma1_edit.text() == "":
@@ -243,9 +246,12 @@ class FitDialog(QDialog):
                 self.append_param(self.data_dict["param"], self.sigma0_edit.text())
                 self.append_param(self.data_dict["param"], self.q1_edit.text())
                 self.append_param(self.data_dict["param"], self.sigma1_edit.text())
-                self.out_message.emit(self.data_dict)
-                print(self.data_dict)
-                self.close()
+                if len(self.data_dict["param"]) == 6:
+                    self.out_message.emit(self.data_dict)
+                    print(self.data_dict)
+                    self.close()
+                else:
+                    print("参数错误")
         if self.model == Fit.GlobalNoise:
             if self.amp_edit.text() == "" or self.w_edit.text() == "" or self.alpha_edit.text() == "" or \
                self.mu_edit.text() == "" or self.q0_edit.text() == "" or self.sigma0_edit.text() == "" or \
@@ -261,9 +267,12 @@ class FitDialog(QDialog):
                 self.append_param(self.data_dict["param"], self.sigma0_edit.text())
                 self.append_param(self.data_dict["param"], self.q1_edit.text())
                 self.append_param(self.data_dict["param"], self.sigma1_edit.text())
-                self.out_message.emit(self.data_dict)
-                print(self.data_dict)
-                self.close()
+                if len(self.data_dict["param"]) == 8:
+                    self.out_message.emit(self.data_dict)
+                    print(self.data_dict)
+                    self.close()
+                else:
+                    print("参数错误")
 
 
 class AfterPulseDialog(QDialog):
