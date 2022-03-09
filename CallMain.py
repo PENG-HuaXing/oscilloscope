@@ -5,6 +5,7 @@ from UiMain import Ui_MainWindow
 import CallUiWaveForm as UiW
 import CallUiSPE as UiSPE
 import CallUiAfertPulse as UiAP
+import CallUiQDC as UiQDC
 
 
 class CallUiMain(QMainWindow, Ui_MainWindow):
@@ -13,7 +14,7 @@ class CallUiMain(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(CallUiMain, self).__init__()
         self.setupUi(self)
-        self.menu_list = ["波形分析模块", "单光电子谱分析模块", "后脉冲分析模块"]
+        self.menu_list = ["波形分析模块", "单光电子谱分析模块", "后脉冲分析模块", "QDC分析模块"]
         slm = QStringListModel()
         slm.setStringList(self.menu_list)
         self.listView.setModel(slm)
@@ -35,12 +36,15 @@ def jump_to(win_index: int):
     global wave_form_ui
     global SPE_ui
     global after_pulse_ui
+    global qdc_ui
     if win_index == 0:
         wave_form_ui.show()
     if win_index == 1:
         SPE_ui.show()
     if win_index == 2:
         after_pulse_ui.show()
+    if win_index == 3:
+        qdc_ui.show()
     if win_index == -1:
         QMessageBox.warning(None, "warning", "You didn't select any module", QMessageBox.Ok)
 
@@ -51,6 +55,7 @@ if __name__ == "__main__":
     wave_form_ui = UiW.CallUiWaveForm()
     SPE_ui = UiSPE.CallUiSPE()
     after_pulse_ui = UiAP.CallUiAfterPulse()
+    qdc_ui = UiQDC.CallUiQDC()
     main_ui.call_window.connect(jump_to)
     main_ui.show()
     sys.exit(app.exec_())
