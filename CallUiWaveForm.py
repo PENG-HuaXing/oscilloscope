@@ -120,7 +120,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
             file_list = os.listdir(dir_name)
             base_name = []
             for i in file_list:
-                if i.endswith(".csv"):
+                if i.endswith(".csv") or i.endswith("trc"):
                     base_name.append(i)
             base_name.sort()
             for i in base_name:
@@ -130,7 +130,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
             self.listView.setModel(slm)
             self.lineEdit.setText(dir_name)
             self.lineEdit_2.setText(str(len(file_list)))
-            self.wave_form = WaveForm.load_from_csv(self.data_file_list[0])
+            self.wave_form = WaveForm.load_from_file(self.data_file_list[0])
             self.lineEdit_3.setText(str(format(self.wave_form.get_time_bound()[0], '.2e')))
             self.lineEdit_4.setText(str(format(self.wave_form.get_time_bound()[1], '.2e')))
             self.lineEdit_5.setText(str(format(self.wave_form.get_delta_time(), '.2e')))
@@ -288,7 +288,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
         for i in self.data_file_list:
             row = []
             row.append(i)
-            wave = WaveForm.load_from_csv(i)
+            wave = WaveForm.load_from_file(i)
             if param["ped_flag"] == Active.Ped:
                 ped = wave.pedestal(param["ped_interval"][1], param["ped_interval"][2], param["int_flag"])
             int_value = wave.integrate(param["int_interval"][1], param["int_interval"][2], ped, param["int_flag"])
@@ -333,7 +333,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
         self.canvas.ax.grid(True)
         file = os.path.join(self.lineEdit.text(), index.data())
         print(file)
-        self.wave_form = WaveForm.load_from_csv(file)
+        self.wave_form = WaveForm.load_from_file(file)
         self.canvas.ax.plot(self.wave_form.get_time(), self.wave_form.get_ampl())
         if self.checkBox_4.isChecked():
             print("checkBox_4: {}".format(self.checkBox_4.isChecked()))
