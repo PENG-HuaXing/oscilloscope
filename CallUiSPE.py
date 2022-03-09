@@ -60,6 +60,8 @@ class CallUiSPE(Ui_Form, QWidget):
         # 绘制拟合曲线
         self.pushButton_7.clicked.connect(self.refresh)
         self.checkBox.toggled.connect(self.refresh)
+        # 输出信号绑定browser_text显示拟合参数
+        self.out_message.connect(self.show_message)
         # checkBox
         self.checkBox_2.toggled.connect(self.refresh)
         self.checkBox_3.stateChanged.connect(self.refresh)
@@ -119,72 +121,6 @@ class CallUiSPE(Ui_Form, QWidget):
         self.checkBox_2.setEnabled(status)
         self.checkBox_3.setEnabled(status)
         self.checkBox_4.setEnabled(status)
-
-    def switch_fit_conclusion(self, model = Fit.NoFit, *param):
-        if model == Fit.NoFit:
-            self.label_16.setText("None")
-            self.label_17.setText("w：")
-            self.label_18.setText("None")
-            self.label_22.setText("alpha：")
-            self.label_19.setText("None")
-            self.label_20.setText("mu：")
-            self.label_21.setText("None")
-            self.label_26.setText("q0：")
-            self.label_23.setText("None")
-            self.label_24.setText("sigma0：")
-            self.label_25.setText("None")
-            self.label_30.setText("q1：")
-            self.label_27.setText("None")
-            self.label_28.setText("sigma1：")
-            self.label_29.setText("None")
-        if model == Fit.Gauss and len(param) == 3:
-            self.label_16.setText("{: .6g}".format(param[0]))
-            self.label_17.setText("q0：")
-            self.label_18.setText("{: .6g}".format(param[1]))
-            self.label_22.setText("sigma0：")
-            self.label_19.setText("{: .6g}".format(param[2]))
-            self.label_20.setVisible(False)
-            self.label_21.setVisible(False)
-            self.label_26.setVisible(False)
-            self.label_23.setVisible(False)
-            self.label_24.setVisible(False)
-            self.label_25.setVisible(False)
-            self.label_30.setVisible(False)
-            self.label_27.setVisible(False)
-            self.label_28.setVisible(False)
-            self.label_29.setVisible(False)
-        if model == Fit.Global and len(param) == 6:
-            self.label_16.setText("{: .6g}".format(param[0]))
-            self.label_17.setText("mu：")
-            self.label_18.setText("{: .6g}".format(param[1]))
-            self.label_22.setText("q0：")
-            self.label_19.setText("{: .6g}".format(param[2]))
-            self.label_20.setText("sigma0：")
-            self.label_21.setText("{: .6g}".format(param[3]))
-            self.label_26.setText("q1：")
-            self.label_23.setText("{: .6g}".format(param[4]))
-            self.label_24.setText("sigma1：")
-            self.label_25.setText("{: .6g}".format(param[5]))
-            self.label_30.setVisible(False)
-            self.label_27.setVisible(False)
-            self.label_28.setVisible(False)
-            self.label_29.setVisible(False)
-        if model == Fit.Global and len(param) == 8:
-            self.label_16.setText("{: .6g}".format(param[0]))
-            self.label_17.setText("w：")
-            self.label_18.setText("{: .6g}".format(param[1]))
-            self.label_22.setText("alpha：")
-            self.label_19.setText("{: .6g}".format(param[2]))
-            self.label_20.setText("mu：")
-            self.label_21.setText("{: .6g}".format(param[3]))
-            self.label_26.setText("q0：")
-            self.label_23.setText("{: .6g}".format(param[4]))
-            self.label_24.setText("sigma0：")
-            self.label_25.setText("{: .6g}".format(param[5]))
-            self.label_30.setText("q1：")
-            self.label_27.setText("{: .6g}".format(param[6]))
-            self.label_28.setText("sigma1：")
-            self.label_29.setText("{: .6g}".format(param[7]))
 
     def add_files(self):
         files, filetype = QFileDialog.getOpenFileNames(parent=self, caption="添加文件",
@@ -325,17 +261,14 @@ class CallUiSPE(Ui_Form, QWidget):
             fit_par, fit_cov = self.hist[0].fit_spe(dict_data["model"], interval1, interval2, *dict_data["param"])
             self.fit["param"] = fit_par
             self.fit["model"] = Fit.Gauss
-            self.switch_fit_conclusion(self.fit["model"], *fit_par)
         elif dict_data["model"] == Fit.Global and len(self.hist) == 1:
             fit_par, fit_cov = self.hist[0].fit_spe(dict_data["model"], 1, 1, *dict_data["param"])
             self.fit["param"] = fit_par
             self.fit["model"] = Fit.Global
-            self.switch_fit_conclusion(self.fit["model"], *fit_par)
         elif dict_data["model"] == Fit.GlobalNoise and len(self.hist) == 1:
             fit_par, fit_cov = self.hist[0].fit_spe(dict_data["model"], 1, 1, *dict_data["param"])
             self.fit["param"] = fit_par
             self.fit["model"] = Fit.GlobalNoise
-            self.switch_fit_conclusion(self.fit["model"], *fit_par)
         else:
             print("Fit is wrong")
         print("拟合参数为：\n{}".format(self.fit["param"]))
@@ -345,7 +278,15 @@ class CallUiSPE(Ui_Form, QWidget):
             self.checkBox_4.setEnabled(False)
             self.checkBox_2.setEnabled(True)
             self.checkBox_3.setEnabled(True)
-        self.out_message.emit("拟合参数为：\n{}".format(self.fit["param"]))
+        # 拟合参数格式化输出
+        emit_message = "=" * 6 + "拟合结果为" + "=" * 6 + "\n"
+        print("emit message")
+        print("len: {}".format(len(self.fit["param"])))
+        print("param: {}".format(self.fit["param"]))
+        for i in range(len(self.fit["param"])):
+            emit_message = emit_message + "param{0}: {1: .6g}".format(i, self.fit["param"][i]) + "\n"
+        print(emit_message)
+        self.out_message.emit(emit_message)
 
     def collect_param(self):
         print(self.fit)
@@ -424,6 +365,10 @@ class CallUiSPE(Ui_Form, QWidget):
                     self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 5, par[1] / par[2]))
         else:
             pass
+
+    def show_message(self, message: str):
+        my_time = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]: \n")
+        self.textBrowser.append(my_time + message)
 
 
 if __name__ == "__main__":
