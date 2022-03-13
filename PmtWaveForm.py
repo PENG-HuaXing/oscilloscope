@@ -32,6 +32,10 @@ class WaveForm(object):
             x, y, d = trc.open(file)
             return cls(x, y)
 
+    @staticmethod
+    def cubic_fun(x: float, a: float = 1, b: float = 1, c: float = 1, d: float = 1):
+        return np.polyval([a, b, c, d], x)
+
     def _value2index(self, value: float) -> int:
         """
         由数值寻找Time序列的index，最终找到的index在
@@ -121,10 +125,13 @@ class WaveForm(object):
 
 
 if __name__ == "__main__":
+    from scipy.optimize import curve_fit
+    import matplotlib.pyplot as plt
     # data = pd.read_csv("./source/C4--w--07002.csv", header=4)
     # wave = WaveForm(data["Time"].to_numpy(), data["Ampl"].to_numpy())
+    # 读取波形测试
+    """
     wave = WaveForm.load_from_file("./source/C4--w--07002.csv")
-
     ped1 = wave.pedestal(wave.get_time_bound()[0], -200e-9)
     ped2 = wave.pedestal(wave.get_time_bound()[0], -200e-9, PmtC.Wave.Riemann)
     val1 = wave.integrate(-200e-9, 0, 0)
@@ -139,3 +146,35 @@ if __name__ == "__main__":
     print("method2: {}".format(val2))
     print("method ped1: {}".format(pval1))
     print("method ped2: {}".format(pval2))
+    """
+    # 波形拟合上升时间测试
+
+    wave = WaveForm.load_from_file("/run/media/einstein/Elements/CR160_data/CR160_-1400V_LED_3.7V_1kHz_29.8ns_20us_SyncTrigger/C4--w--00007.csv")
+    time = wave.get_time()
+    ampl = wave.get_ampl()
+    min_var, index = wave.min_ampl(-200e-9, 0)
+    min_index = index
+    while True:
+        if ampl[index] > 0.1 * min_var:
+            break
+        else:
+            index = index - 1
+    max_index = index
+    fit_time = time[max_index - 5: min_index + 5]
+    fit_ampl = ampl[max_index - 5: min_index + 5]
+
+    print("min index: {}\nmax index: {}".format(min_index, max_index))
+    fit_par = np.polyfit(fit_time, fit_ampl, 3, full=True)
+    print("fit parameter: {}\nfit par cov: {}".format(fit_par, 1))
+    f, a = plt.subplots()
+    sse = ((fit_ampl - WaveForm.cubic_fun(fit_time, *fit_par[0]))**2).sum()
+    sst = ((fit_ampl - fit_ampl.mean()) ** 2).sum()
+    R2 = 1 - sse/sst
+    print("残差平方和: {}\n离差平方和: {}\nR2: {}".format(sse, sst, R2))
+    print("三次函数根: {}".format(np.roots(fit_par[0])))
+    a.plot(fit_time, fit_ampl)
+    a.plot(fit_time, WaveForm.cubic_fun(fit_time, *fit_par[0]))
+    a.scatter(fit_time, fit_ampl)
+    plt.show()
+
+
