@@ -58,7 +58,7 @@
        <item>
         <widget class="QPushButton" name="pushButton_14">
          <property name="text">
-          <string>清除文件</string>
+          <string>移除文件</string>
          </property>
         </widget>
        </item>
@@ -237,7 +237,14 @@
          </widget>
         </item>
         <item row="1" column="1" colspan="3">
-         <widget class="QLineEdit" name="lineEdit_8"/>
+         <widget class="QLineEdit" name="lineEdit_8">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
         </item>
         <item row="2" column="0" colspan="2">
          <widget class="QCheckBox" name="checkBox">
@@ -268,7 +275,14 @@
          </widget>
         </item>
         <item row="4" column="1" colspan="3">
-         <widget class="QLineEdit" name="lineEdit_9"/>
+         <widget class="QLineEdit" name="lineEdit_9">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
         </item>
         <item row="5" column="0" colspan="4">
          <layout class="QHBoxLayout" name="horizontalLayout">
@@ -301,16 +315,30 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_10"/>
+        <widget class="QLineEdit" name="lineEdit_10">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="pushButton_15">
          <property name="text">
-          <string>循环计算</string>
+          <string>选择文件</string>
          </property>
         </widget>
        </item>
       </layout>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>循环计算</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="Line" name="line">
@@ -336,7 +364,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_11"/>
+        <widget class="QLineEdit" name="lineEdit_11">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
