@@ -195,8 +195,8 @@ class CallUiAfterPulse(QWidget, Ui_Form):
                 tmp_file = part2["File"].iloc[0]
             else:
                 tmp_file = part1["File"].iloc[0]
-            print(tmp_file)
-            wave = WaveForm.load_from_csv(tmp_file)
+            print("tmp file: {}".format(tmp_file))
+            wave = WaveForm.load_from_file(tmp_file)
             self.lineEdit_3.setText(os.path.dirname(tmp_file))
             self.lineEdit_4.setText(str(format(wave.get_time_bound()[0], '.3e')))
             self.lineEdit_5.setText(str(format(wave.get_time_bound()[1], '.3e')))
@@ -222,7 +222,7 @@ class CallUiAfterPulse(QWidget, Ui_Form):
         base_name = index.data()
         self.canvas1.ax.cla()
         self.canvas1.ax.grid(True)
-        wave = WaveForm.load_from_csv(os.path.join(self.lineEdit_3.text(), base_name))
+        wave = WaveForm.load_from_file(os.path.join(self.lineEdit_3.text(), base_name))
         self.canvas1.ax.plot(wave.get_time(), wave.get_ampl())
         if self.checkBox.isChecked():
             x_check, a1, a2 = DataSetTool.comma2interval(self.lineEdit_10.text())
