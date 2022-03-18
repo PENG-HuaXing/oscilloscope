@@ -2,7 +2,7 @@ import time, sys, datetime, os
 from UiWaveForm import Ui_Form
 from PmtDataSetTool import DataSetTool
 from PmtConstant import Extremum, Processing, Active, Wave
-from CallDialog import ExtremumDialog, TriggerDialog
+from CallDialog import ExtremumDialog, TriggerDialog, PandasModel, TableDialog
 from PmtWaveForm import WaveForm
 from Canvas import MatPlotCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
@@ -59,6 +59,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
         self.pushButton_11.clicked.connect(lambda: self.set_processing_flag(self.pushButton_11))
         self.listView.clicked.connect(self.draw_wave)
         self.listView.installEventFilter(self)
+        self.listView.doubleClicked.connect(self.show_table_data)
 
         # 成员变量
         self.wave_form = None
@@ -394,6 +395,27 @@ class CallUiWaveForm(Ui_Form, QWidget):
         self.pushButton_7.setEnabled(False)
         self.pushButton_8.setEnabled(False)
         self.my_thread.start()
+
+    def show_table_data(self, qmi: QModelIndex):
+        dir = self.lineEdit.text()
+        file = qmi.data()
+        file = os.path.join(dir, file)
+        if file.endswith(".csv") and DataSetTool.check_file(file):
+            pd_data = pd.read_csv(file, header=4)
+            model = PandasModel(pd_data)
+            table = TableDialog(self, model)
+            table.show()
+
+        if file.endswith(".trc") and DataSetTool.check_file(file):
+            wave = WaveForm.load_from_file(file)
+            t = list(wave.get_time())
+            a = list(wave.get_ampl())
+            table = [t, a]
+            table = list(map(list, zip(*table)))
+            pd_data = pd.DataFrame(table, columns=["Time", "Ampl"])
+            model = PandasModel(pd_data)
+            table = TableDialog(self, model)
+            table.show()
 
 
 class WorkThread(QThread):
