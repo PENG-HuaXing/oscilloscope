@@ -1,8 +1,5 @@
 import time, sys, datetime, os
-
 import numpy as np
-import youtube_dl.utils
-
 from UiQDC import Ui_Form
 from PmtDataSetTool import DataSetTool
 from PmtConstant import Fit
@@ -383,7 +380,7 @@ class CallUiQDC(QWidget, Ui_Form):
         part1 = content[part1_indexes].sum()
         print("len: {}".format(len(content)))
         print("part2: {}".format(part2_indexes[: -1]))
-        print("content: {}".format(content[396]))
+        # print("content: {}".format(content[396]))
         part2 = content[part2_indexes[: -1]].sum()
         print("part2: {}".format(part2))
         total = part1 + part2
