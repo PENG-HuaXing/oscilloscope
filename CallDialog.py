@@ -2,9 +2,9 @@ import pandas as pd
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from PmtConstant import Extremum
-from PmtConstant import Fit
+from PmtConstant import Extremum, Fit
 import numpy as np
+from PmtDataSetTool import DataSetTool
 
 
 class ExtremumDialog(QDialog):
@@ -340,9 +340,131 @@ class AfterPulseDialog(QDialog):
             QMessageBox.warning(self, "警告", "数值设置错误", QMessageBox.Ok)
 
 
+class RaiseTimeSetBin(QDialog):
+    emit_bins = pyqtSignal(np.ndarray)
+
+    def __init__(self, parent=None):
+        super(RaiseTimeSetBin, self).__init__(parent)
+        layout = QVBoxLayout(self)
+        label1 = QLabel("bin区间")
+        self.edit1 = QLineEdit()
+        label2 = QLabel("bin数量")
+        # 设置正则表达筛选器
+        interval_validator = QRegExpValidator(self)
+        reg = QRegExp(r"^(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)\s*,"
+                      r"\s*(([\+-]?\d+(\.{0}|\.\d+))[Ee]{1}([\+-]?\d+)|[\+-]?\d+\.?\d*)")
+        interval_validator.setRegExp(reg)
+        self.edit1.setValidator(interval_validator)
+        self.spin = QSpinBox()
+        self.spin.setRange(0, 2147483647)
+        button1 = QPushButton("绘制")
+        button2 = QPushButton("取消")
+        formal = QFormLayout()
+        formal.addRow(label1, self.edit1)
+        formal.addRow(label2, self.spin)
+        hlayout = QHBoxLayout()
+        hlayout.addWidget(button1)
+        hlayout.addWidget(button2)
+        layout.addLayout(formal)
+        layout.addLayout(hlayout)
+        button2.clicked.connect(self.close)
+        button1.clicked.connect(self.emit_data)
+
+    def emit_data(self):
+        check, val1, val2 = DataSetTool.comma2interval(self.edit1.text())
+        if check:
+            bin = np.linspace(val1, val2, self.spin.value())
+            # print("set bins: {}".format(bin))
+            self.emit_bins.emit(bin)
+            self.close()
+        else:
+            QMessageBox.warning(self, "警告", "参数错误", QMessageBox.Ok)
+
+
+class PandasModel(QAbstractTableModel):
+    """A model to interface a Qt view with pandas dataframe """
+
+    def __init__(self, dataframe: pd.DataFrame, parent=None):
+        QAbstractTableModel.__init__(self, parent)
+        self._dataframe = dataframe
+
+    def rowCount(self, parent=QModelIndex()) -> int:
+        """ Override method from QAbstractTableModel
+
+        Return row count of the pandas DataFrame
+        """
+        if parent == QModelIndex():
+            return len(self._dataframe)
+
+        return 0
+
+    def columnCount(self, parent=QModelIndex()) -> int:
+        """Override method from QAbstractTableModel
+
+        Return column count of the pandas DataFrame
+        """
+        if parent == QModelIndex():
+            return len(self._dataframe.columns)
+        return 0
+
+    def data(self, index: QModelIndex, role=Qt.ItemDataRole):
+        """Override method from QAbstractTableModel
+
+        Return data cell from the pandas DataFrame
+        """
+        if not index.isValid():
+            return None
+
+        if role == Qt.DisplayRole:
+            return str(self._dataframe.iloc[index.row(), index.column()])
+
+        return None
+
+    def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole):
+        """Override method from QAbstractTableModel
+
+        Return dataframe index as vertical header data and columns as horizontal header data.
+        """
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return str(self._dataframe.columns[section])
+
+            if orientation == Qt.Vertical:
+                return str(self._dataframe.index[section])
+
+        return None
+
+
+class TableDialog(QDialog):
+    def __init__(self, parent = None, pdm: PandasModel = PandasModel(pd.DataFrame())):
+        super(TableDialog, self).__init__(parent)
+        self.resize(800, 500)
+        layout = QHBoxLayout(self)
+        view = QTableView()
+        layout.addWidget(view)
+        view.horizontalHeader().setStretchLastSection(True)
+        view.setAlternatingRowColors(True)
+        view.setSelectionBehavior(QTableView.SelectRows)
+        view.setModel(pdm)
+
+
+
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    ui = AfterPulseDialog()
+    ui = RaiseTimeSetBin()
     ui.show()
     sys.exit(app.exec_())
+
+    #========pandas转table方法====================
+    # df = pd.read_csv("./example/1353V.csv")
+    # view = QTableView()
+    # view.resize(800, 500)
+    # view.horizontalHeader().setStretchLastSection(True)
+    # view.setAlternatingRowColors(True)
+    # view.setSelectionBehavior(QTableView.SelectRows)
+    # model = PandasModel(df)
+    # view.setModel(model)
+    # view.show()
+    # app.exec()
+    #=============================================
