@@ -158,6 +158,18 @@ class DataSetTool(object):
             print("参数错误")
             return np.array([])
 
+    @staticmethod
+    def extreme_cubic_fun(a, b, c, d):
+        delta = 4 * b ** 2 - 12 * a * c
+        if delta >= 0:
+            l_zero = (-2 * b - np.sqrt(delta)) / (6 * a)
+            r_zero = (-2 * b + np.sqrt(delta)) / (6 * a)
+            l_extreme = np.polyval([a, b, c, d], l_zero)
+            r_extreme = np.polyval([a, b, c, d], r_zero)
+            return l_zero, r_zero, l_extreme, r_extreme
+        else:
+            return None
+
 
 
 if __name__ == "__main__":
