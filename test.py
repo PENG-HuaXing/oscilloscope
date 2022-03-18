@@ -10,6 +10,7 @@ class Test(QWidget):
         self.line = QLineEdit()
         self.check = QCheckBox("Check")
         self.check.setTristate(True)
+        self.radio = QRadioButton("Hello")
         self.push = QPushButton("Disable")
         self.push2 = QPushButton("Enable")
         self.push3 = QPushButton("Clear")
@@ -32,6 +33,7 @@ class Test(QWidget):
         layout.addWidget(self.push4)
         layout.addWidget(self.push5)
         layout.addWidget(self.push6)
+        layout.addWidget(self.radio)
 
     def check_status(self):
         print("check status: {}".format(self.check.checkState()))
@@ -40,8 +42,10 @@ class Test(QWidget):
     def disable_check(self):
         if self.check.isEnabled():
             self.check.setEnabled(False)
+            self.radio.setEnabled(False)
         else:
             self.check.setEnabled(True)
+            self.radio.setEnabled(True)
         print(self.check.checkState())
 
     def disable(self):
