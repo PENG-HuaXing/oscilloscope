@@ -42,3 +42,12 @@ class Active(Enum):
     NoExt = auto()
     Tri = auto()
     NoTri = auto()
+
+
+class RaiseTime(Enum):
+    Ped = auto()
+    NoPed = auto()
+    Default = auto()
+    Custom = auto()
+    Cubic = auto()
+    Proportion = auto()
