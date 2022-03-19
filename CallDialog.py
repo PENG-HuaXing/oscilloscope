@@ -441,12 +441,11 @@ class TableDialog(QDialog):
         self.resize(800, 500)
         layout = QHBoxLayout(self)
         view = QTableView()
-        layout.addWidget(view)
-        view.horizontalHeader().setStretchLastSection(True)
+        view.setModel(pdm)
         view.setAlternatingRowColors(True)
         view.setSelectionBehavior(QTableView.SelectRows)
-        view.setModel(pdm)
-
+        view.resizeColumnsToContents()
+        layout.addWidget(view)
 
 
 if __name__ == "__main__":
@@ -455,7 +454,6 @@ if __name__ == "__main__":
     ui = RaiseTimeSetBin()
     ui.show()
     sys.exit(app.exec_())
-
     #========pandas转table方法====================
     # df = pd.read_csv("./example/1353V.csv")
     # view = QTableView()
