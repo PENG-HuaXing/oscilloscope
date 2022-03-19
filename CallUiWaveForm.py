@@ -340,8 +340,8 @@ class CallUiWaveForm(Ui_Form, QWidget):
         # 保存文件信息
         ff = open(save_file.replace(".csv", ".info"), "w")
         ff.write("date: " + datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]") + "\n")
-        ff.write("data_dir: " + self.lineEdit.text() + "\n")
-        ff.write("data_num: " + self.lineEdit_2.text() + "\n")
+        ff.write("wave_data_dir: " + self.lineEdit.text() + "\n")
+        ff.write("wave_data_num: " + self.lineEdit_2.text() + "\n")
         for i in range(3):
             tmp_file = self.data_file_list[i]
             ff.write("file{}[md5]: {}[{}]\n".format(i, tmp_file, hashlib.md5(open(tmp_file, "rb").read()).hexdigest()))
@@ -350,9 +350,9 @@ class CallUiWaveForm(Ui_Form, QWidget):
                 ff.write(key + ": {}, {}\n".format(param[key][1], param[key][2]))
             else:
                 ff.write(key + ": " + str(param[key]) + "\n")
-        ff.write("save_dir: " + os.path.dirname(os.path.realpath(save_file)) + "\n")
-        ff.write("save_file: " + os.path.basename(os.path.realpath(save_file)) + "\n")
-        ff.write("save_md5: " + hashlib.md5(open(os.path.realpath(save_file), "rb").read()).hexdigest() + "\n")
+        ff.write("spe_dir: " + os.path.dirname(os.path.realpath(save_file)) + "\n")
+        ff.write("spe_file: " + os.path.basename(os.path.realpath(save_file)) + "\n")
+        ff.write("spe_md5: " + hashlib.md5(open(os.path.realpath(save_file), "rb").read()).hexdigest() + "\n")
         ff.close()
         #################################################
 
