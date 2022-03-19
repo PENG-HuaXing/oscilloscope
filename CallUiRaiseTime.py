@@ -5,7 +5,7 @@ from UiRaiseTime import Ui_Form
 from PmtDataSetTool import DataSetTool
 from PmtConstant import RaiseTime, Processing, Fit
 from PmtWaveForm import WaveForm
-from CallDialog import PandasModel, RaiseTimeSetBin, FitDialog
+from CallDialog import PandasModel, RaiseTimeSetBin, FitDialog, TableDialog
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from Canvas import MatPlotCanvas
 from DoubleCanvas import MatPlotDoubleCanvas
@@ -18,7 +18,7 @@ class CallUiRaiseTime(QWidget, Ui_Form):
     text_message = pyqtSignal(str)
 
     def __init__(self):
-        super(CallRaiseTime, self).__init__()
+        super(CallUiRaiseTime, self).__init__()
         self.setupUi(self)
         # text browser 输出进程信息
         self.text_message.connect(self.append_message)
@@ -50,6 +50,12 @@ class CallUiRaiseTime(QWidget, Ui_Form):
         self.pushButton_14.clicked.connect(self.remove_file)
         # 选择SPE文件
         self.listView.clicked.connect(self.select_file)
+        # 查看SPE内容
+        self.listView.doubleClicked.connect(self.view1_show_table)
+        # 查看Wave内容
+        self.listView_2.doubleClicked.connect(self.view2_show_table)
+        # 查看table内容
+        self.tableView.doubleClicked.connect(self.table_show_table)
         # 筛选信号文件
         self.pushButton_10.clicked.connect(self.filter1)
         # 上升时间设置
@@ -465,9 +471,9 @@ class CallUiRaiseTime(QWidget, Ui_Form):
             if key != "save_file":
                 ff.write(key + ": " + str(param[key]) + "\n")
             else:
-                ff.write("save_dir: " + os.path.dirname(os.path.realpath(param[key])) + "\n")
-                ff.write("save_file: " + os.path.basename(os.path.realpath(param[key])) + "\n")
-                ff.write("save_md5: " + hashlib.md5(open(os.path.realpath(param[key]), "rb").read()).hexdigest() + "\n")
+                ff.write("raisetime_dir: " + os.path.dirname(os.path.realpath(param[key])) + "\n")
+                ff.write("raisetime_file: " + os.path.basename(os.path.realpath(param[key])) + "\n")
+                ff.write("raisetime_md5: " + hashlib.md5(open(os.path.realpath(param[key]), "rb").read()).hexdigest() + "\n")
         ff.close()
         ######################################################
         self.raise_time_data = my_data
@@ -675,7 +681,7 @@ class CallUiRaiseTime(QWidget, Ui_Form):
             for i in initial_par["param"]:
                 par.append(i[0])
                 bound.append((i[1], i[2]))
-            fit_par, par_cov = scipy.optimize.curve_fit(CallRaiseTime.gauss, x, content, par, bounds=list(zip(*bound)))
+            fit_par, par_cov = scipy.optimize.curve_fit(CallUiRaiseTime.gauss, x, content, par, bounds=list(zip(*bound)))
             print("fit param: {}".format(fit_par))
             emit_message = ""
             for i in range(len(fit_par)):
@@ -683,13 +689,42 @@ class CallUiRaiseTime(QWidget, Ui_Form):
             self.text_message.emit("\n" + emit_message)
             self.mpc2.ax.cla()
             self.mpc2.ax.hist(x, bins, weights=content)
-            self.mpc2.ax.plot(x, CallRaiseTime.gauss(x, *fit_par))
+            self.mpc2.ax.plot(x, CallUiRaiseTime.gauss(x, *fit_par))
             self.mpc2.ax.grid(True)
             self.mpc2.draw()
         else:
             QMessageBox.warning(self, "警告", "参数错误", QMessageBox.Ok)
 
+    def view1_show_table(self, qmi: QModelIndex):
+        dir = self.lineEdit.text()
+        file = qmi.data()
+        file = os.path.join(dir, file)
+        if DataSetTool.check_file(file):
+            pdm = PandasModel(pd.read_csv(file))
+            table = TableDialog(self, pdm)
+            table.show()
 
+    def view2_show_table(self, qmi: QModelIndex):
+        dir = self.lineEdit_6.text()
+        file = qmi.data()
+        file = os.path.join(dir, file)
+        if DataSetTool.check_file(file):
+            wave = WaveForm.load_from_file(file)
+            t = wave.get_time()
+            a = wave.get_ampl()
+            pd_data = pd.DataFrame(np.stack([t, a], axis=-1), columns=["Time", "Ampl"])
+            pdm = PandasModel(pd_data)
+            table = TableDialog(self, pdm)
+            table.show()
+
+    def table_show_table(self, qmi: QModelIndex):
+        if DataSetTool.check_file(self.lineEdit_14.text()):
+            pd_data = pd.read_csv(self.lineEdit_14.text())
+            pdm = PandasModel(pd_data)
+            table = TableDialog(self, pdm)
+            table.show()
+        else:
+            QMessageBox.warning(self, "警告", "未选择任何文件", QMessageBox.Ok)
 
 
 class WorkThread(QThread):
@@ -705,6 +740,6 @@ class WorkThread(QThread):
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    ui = CallRaiseTime()
+    ui = CallUiRaiseTime()
     ui.show()
     sys.exit(app.exec_())
