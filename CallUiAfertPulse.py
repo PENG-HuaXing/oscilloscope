@@ -219,8 +219,7 @@ class CallUiAfterPulse(QWidget, Ui_Form):
 
     def show_wave(self, index: QModelIndex):
         base_name = index.data()
-        self.canvas1.ax.cla()
-        self.canvas1.ax.grid(True)
+        self.canvas1.initial(x_label="time[s]", y_label="Voltage[V]", title="wave form")
         wave = WaveForm.load_from_file(os.path.join(self.lineEdit_3.text(), base_name))
         self.canvas1.ax.plot(wave.get_time(), wave.get_ampl())
         if self.checkBox.isChecked():
@@ -301,8 +300,7 @@ class CallUiAfterPulse(QWidget, Ui_Form):
                     break
             self.text_message.emit("信号文件数目：{}\n后脉冲文件数目：{}\n后脉冲率：{}".format(len(param["data"]), len(ap_file_list), len(ap_file_list) / len(param["data"])))
             output_data = pd.DataFrame(data_list, columns=columns)
-            self.canvas2.ax.cla()
-            self.canvas2.ax.grid(True)
+            self.canvas2.initial(x_label="time[s]", y_label="integral value", title="after pulse scatter")
             self.canvas2.ax.scatter(output_data["Time"].to_numpy(), output_data["Q"].to_numpy())
             self.canvas2.draw()
             if DataSetTool.check_file(os.path.dirname(param["save_file"])):
@@ -416,8 +414,7 @@ class CallUiAfterPulse(QWidget, Ui_Form):
                 time_column = pd_data["Time"]
                 q_column = pd_data["Q"]
                 print(q_column)
-                self.canvas2.ax.cla()
-                self.canvas2.ax.grid("True")
+                self.canvas2.initial(x_label="time[s]", y_label="integral value", title="after pulse scatter")
                 self.canvas2.ax.scatter(time_column.to_numpy(), q_column.to_numpy())
                 self.canvas2.draw()
             except KeyError:

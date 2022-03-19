@@ -579,12 +579,13 @@ class CallUiRaiseTime(QWidget, Ui_Form):
 
     def show_raise_time(self, bins: np.ndarray = np.array([])):
         self.raise_time_hist.clear()
-        self.mpc2.ax.cla()
-        self.mpc2.ax.grid(True)
+        self.mpc2.initial(x_label="time[ns]", y_label="count", title="raise time distribution")
         filter_r2_data = self._get_filter_r2_data()
         raise_time = filter_r2_data["raise_time"].to_numpy()
         # 提出nan元素,  否则max和min得出的结果为nan
         raise_time = raise_time[np.logical_not(np.isnan(raise_time))]
+        # 横座标改为ns
+        raise_time = raise_time * 1e9
         if len(bins) == 0:
             default_bins = np.linspace(raise_time.min(), raise_time.max(), 100)
             content, bins, _ = self.mpc2.ax.hist(raise_time, default_bins)
@@ -671,10 +672,9 @@ class CallUiRaiseTime(QWidget, Ui_Form):
 
     def fit_and_draw(self, initial_par):
         if len(initial_par["param"]) == 3 and len(self.raise_time_hist) != 0:
-            print(initial_par)
             par = []
             bound = []
-            bins = 1e9 * self.raise_time_hist["bins"]
+            bins = self.raise_time_hist["bins"]
             content = self.raise_time_hist["content"]
             half_delta_bin = (bins[1] - bins[0]) / 2
             x = bins[: -1] + half_delta_bin
@@ -687,7 +687,7 @@ class CallUiRaiseTime(QWidget, Ui_Form):
             for i in range(len(fit_par)):
                 emit_message = emit_message + "param{0}: {1: .6g}".format(i, fit_par[i]) + "\n"
             self.text_message.emit("\n" + emit_message)
-            self.mpc2.ax.cla()
+            self.mpc2.initial(x_label="time[ns]", y_label="count", title="raise time distribution")
             self.mpc2.ax.hist(x, bins, weights=content)
             self.mpc2.ax.plot(x, CallUiRaiseTime.gauss(x, *fit_par))
             self.mpc2.ax.grid(True)

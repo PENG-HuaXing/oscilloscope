@@ -13,8 +13,8 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout_3">
-   <item>
+  <layout class="QGridLayout" name="gridLayout_7">
+   <item row="0" column="0">
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QListView" name="listView">
@@ -147,22 +147,22 @@
      </item>
     </layout>
    </item>
-   <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>906</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item>
+   <item row="0" column="1">
     <layout class="QGridLayout" name="gridLayout_5">
-     <item row="0" column="0">
+     <item row="0" column="0" rowspan="4">
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>906</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="0" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
         <widget class="QCheckBox" name="checkBox">
@@ -199,11 +199,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_5">
-         <property name="text">
-          <string>刷新</string>
-         </property>
-        </widget>
+        <widget class="QComboBox" name="comboBox_2"/>
        </item>
        <item>
         <spacer name="horizontalSpacer">
@@ -220,13 +216,13 @@
        </item>
       </layout>
      </item>
-     <item row="1" column="0">
+     <item row="1" column="1">
       <widget class="QWidget" name="widget" native="true"/>
      </item>
-     <item row="2" column="0">
+     <item row="2" column="1">
       <widget class="QWidget" name="widget_2" native="true"/>
      </item>
-     <item row="3" column="0">
+     <item row="3" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QGroupBox" name="groupBox">

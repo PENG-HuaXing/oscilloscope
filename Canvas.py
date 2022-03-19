@@ -22,6 +22,27 @@ class MatPlotCanvas(FigureCanvas):
             self.ax.set_ylim(*y_lim)
 
     def init_graph(self):
-        x = np.linspace(-3, 3, 200)
+        x = np.linspace(-7, 7, 200)
         self.ax.plot(x, np.sin(x))
+        self.ax.plot(x, np.cos(x))
+        self.ax.set_xlabel("x label")
+        self.ax.set_ylabel("y label")
+        self.ax.set_title("title")
+        self.ax.set_ylim(-3, 3)
+        self.ax.minorticks_on()
+        self.ax.grid(True)
+        self.fig.set_tight_layout(True)
         self.draw()
+
+    def initial(self, grid: bool = True, x_label: str = None, y_label: str = None, title: str = None, minor: bool = True):
+        self.ax.clear()
+        self.ax.grid(grid)
+        if x_label is not None:
+            self.ax.set_xlabel(x_label)
+        if y_label is not None:
+            self.ax.set_ylabel(y_label)
+        if title is not None:
+            self.ax.set_title(title)
+        if minor is True:
+            self.ax.minorticks_on()
+        self.fig.set_tight_layout(True)

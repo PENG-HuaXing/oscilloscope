@@ -357,8 +357,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
         #################################################
 
     def draw_wave(self, index: QModelIndex):
-        self.canvas.ax.cla()
-        self.canvas.ax.grid(True)
+        self.canvas.initial(x_label="time[s]", y_label="Voltage[V]", title="wave form")
         file = os.path.join(self.lineEdit.text(), index.data())
         print(file)
         self.wave_form = WaveForm.load_from_file(file)

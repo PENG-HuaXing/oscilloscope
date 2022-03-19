@@ -57,6 +57,9 @@ class CallUiSPE(Ui_Form, QWidget):
         # 事例数比例设置
         self.lineEdit_8.editingFinished.connect(self.proportion)
         self.comboBox.addItems(["单高斯拟合", "全局拟合", "全局拟合(含噪声)"])
+        # x label
+        self.comboBox_2.addItems(["None", "C", "mC", "uC", "nC"])
+        self.comboBox_2.currentIndexChanged.connect(self.refresh)
         # 引出拟合参数设置对话框
         self.pushButton_6.clicked.connect(self.set_fit_param)
         # 绘制拟合曲线
@@ -82,8 +85,8 @@ class CallUiSPE(Ui_Form, QWidget):
         canvas_size_policy.setHorizontalStretch(0)
         canvas_size_policy.setVerticalStretch(2)
         self.canvas.setSizePolicy(canvas_size_policy)
-        self.gridLayout_5.addWidget(self.tool_bar, 1, 0, 1, 1)
-        self.gridLayout_5.addWidget(self.canvas, 2, 0, 1, 1)
+        self.gridLayout_5.addWidget(self.tool_bar, 1, 1, 1, 1)
+        self.gridLayout_5.addWidget(self.canvas, 2, 1, 1, 1)
 
     def switch_hist_setting(self, status: bool, clear: bool = False):
         if clear is True:
@@ -118,11 +121,11 @@ class CallUiSPE(Ui_Form, QWidget):
         self.lineEdit_11.setEnabled(status)
 
     def switch_graph_setting(self, status: bool):
-        self.pushButton_5.setEnabled(status)
         self.checkBox.setEnabled(status)
         self.checkBox_2.setEnabled(status)
         self.checkBox_3.setEnabled(status)
         self.checkBox_4.setEnabled(status)
+        self.comboBox_2.setEnabled(status)
 
     def add_files(self):
         files, filetype = QFileDialog.getOpenFileNames(parent=self, caption="添加文件",
@@ -172,8 +175,7 @@ class CallUiSPE(Ui_Form, QWidget):
         self.fit["model"] = Fit.NoFit
 
     def draw_hist(self):
-        self.canvas.ax.cla()
-        self.canvas.ax.grid(True)
+        self.canvas.initial(x_label="integral value", y_label="count", title="signal photon spectra")
         # 清空成员变量中spe列表内容和hist的列表内容
         # 列表中存储这后续将要绘制，或者拟合的电子谱图
         self.spe.clear()
@@ -307,11 +309,13 @@ class CallUiSPE(Ui_Form, QWidget):
         return collection
 
     def refresh(self):
-        print("Enter refresh fun")
-        self.canvas.ax.cla()
-        self.canvas.ax.grid(True)
+        if self.comboBox_2.currentIndex() == 0:
+            self.canvas.initial(x_label="integral value", y_label="count", title="single photon spectra")
+        elif self.comboBox_2.currentIndex() > 0:
+            self.canvas.initial(x_label=self.comboBox_2.currentText(), y_label="count", title="single photon spectra")
+        else:
+            self.canvas.initial(x_label="integral value", y_label="count", title="single photon spectra")
         collection = self.collect_param()
-        print("collection parameters: {}".format(collection))
         if len(self.hist) != 0:
             # 直方图checkBox检测
             if collection["hist"] is True:

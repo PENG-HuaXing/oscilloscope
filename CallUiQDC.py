@@ -190,8 +190,7 @@ class CallUiQDC(QWidget, Ui_Form):
 
     def draw_hist(self):
         self.hist_list.clear()
-        self.mpc.ax.cla()
-        self.mpc.ax.grid(True)
+        self.mpc.initial(x_label="25fC/Channel", y_label="count", title="single photon spectra [QDC]")
         # 获取所选择的QModelIndex
         model_index_list = self.tableWidget.selectionModel().selection().indexes()
         selected_file_and_channel = [[], []]
@@ -317,8 +316,7 @@ class CallUiQDC(QWidget, Ui_Form):
         return collection
 
     def refresh(self):
-        self.mpc.ax.cla()
-        self.mpc.ax.grid(True)
+        self.mpc.initial(x_label="25fC/Channel", y_label="count", title="single photon spectra [QDC]")
         collection = self.collect_param()
         if len(self.hist_list) != 0:
             if collection["hist"] is True:
