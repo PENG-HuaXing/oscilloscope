@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -10,7 +11,7 @@ from PmtSinglePhotonSpectrum import SinglePhotonSpectrum
 from PmtSpeHist import SpeHist
 from PmtDataSetTool import DataSetTool
 from PmtConstant import Fit
-from CallDialog import FitDialog
+from CallDialog import FitDialog, PandasModel, TableDialog
 import matplotlib.pyplot as plt
 
 
@@ -34,6 +35,7 @@ class CallUiSPE(Ui_Form, QWidget):
         self.pushButton_4.clicked.connect(self.clear_listview)
         # 选择文件动作
         self.listView.clicked.connect(self.show_file_info)
+        self.listView.doubleClicked.connect(self.show_table_data)
         self.listView.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.lineEdit_5.setText("1")
         self.radioButton.toggled.connect(self.switch_bin_setting)
@@ -369,6 +371,15 @@ class CallUiSPE(Ui_Form, QWidget):
     def show_message(self, message: str):
         my_time = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]: \n")
         self.textBrowser.append(my_time + message)
+
+    def show_table_data(self, qmi: QModelIndex):
+        dir = self.lineEdit.text()
+        file = qmi.data()
+        file = os.path.join(dir, file)
+        pd_data = pd.read_csv(file)
+        pdm = PandasModel(pd_data)
+        table = TableDialog(self, pdm)
+        table.show()
 
 
 if __name__ == "__main__":
