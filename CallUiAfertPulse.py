@@ -1,19 +1,19 @@
-import time
-from CallDialog import AfterPulseDialog
+import time, hashlib, os, datetime
+import numpy as np
+import pandas as pd
+from CallDialog import AfterPulseDialog, PandasModel, TableDialog
 from UiAfterPulse import Ui_Form
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from Canvas import MatPlotCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import os, datetime
 from PmtSinglePhotonSpectrum import SinglePhotonSpectrum
 from PmtDataSetTool import DataSetTool
 from PmtWaveForm import WaveForm
 import PmtConstant
 from PmtConstant import Processing
 from PmtAfterPulse import AfterPulse
-import pandas as pd
 
 
 class CallUiAfterPulse(QWidget, Ui_Form):
@@ -36,6 +36,7 @@ class CallUiAfterPulse(QWidget, Ui_Form):
         self.pushButton_3.clicked.connect(self.remove_file)
         # listView 单击选择spe文件
         self.listView.clicked.connect(self.select_spe)
+        self.listView.doubleClicked.connect(self.view_show_table)
         # 初始化comboBox内容
         self.comboBox.addItems(["Q <", "Q >"])
         sci_validator = QRegExpValidator(self)
@@ -55,6 +56,7 @@ class CallUiAfterPulse(QWidget, Ui_Form):
         self.pushButton_7.clicked.connect(self.filter)
         # 选择波形文件
         self.listView_2.clicked.connect(self.show_wave)
+        self.listView_2.doubleClicked.connect(self.view2_show_table)
         self.listView_2.installEventFilter(self)
         # 设置计算后脉冲参数
         self.pushButton.clicked.connect(self.set_after_pulse_setting)
@@ -124,8 +126,8 @@ class CallUiAfterPulse(QWidget, Ui_Form):
         self.lineEdit_10.setEnabled(widget)
         self.lineEdit_11.setEnabled(widget)
 
-    def switch_filter_setting(self, widget: bool):
-        if widget is False:
+    def switch_filter_setting(self, widget: bool, clear: bool = False):
+        if clear is True:
             self.lineEdit_3.clear()
             self.lineEdit_4.clear()
             self.lineEdit_5.clear()
@@ -177,11 +179,10 @@ class CallUiAfterPulse(QWidget, Ui_Form):
 
     def select_spe(self, index: QModelIndex):
         self.lineEdit_2.setText(os.path.dirname(self.spe_files_list[index.row()]))
-        self.switch_filter_setting(True)
+        # self.switch_filter_setting(True, True)
 
     def filter(self):
         index = self.listView.currentIndex()
-        print("current index: {}".format(index))
         if index == -1:
             QMessageBox.warning(self, "警告", "未选择任何文件", QMessageBox.Ok)
         elif self.lineEdit.text() == "":
@@ -190,12 +191,10 @@ class CallUiAfterPulse(QWidget, Ui_Form):
             pd_data = DataSetTool.read_file(self.spe_files_list[index.row()])
             spe = SinglePhotonSpectrum(pd_data)
             part1, part2 = spe.proportion(float(self.lineEdit.text()))
-            print(part1)
             if len(part1) == 0:
                 tmp_file = part2["File"].iloc[0]
             else:
                 tmp_file = part1["File"].iloc[0]
-            print("tmp file: {}".format(tmp_file))
             wave = WaveForm.load_from_file(tmp_file)
             self.lineEdit_3.setText(os.path.dirname(tmp_file))
             self.lineEdit_4.setText(str(format(wave.get_time_bound()[0], '.3e')))
@@ -302,15 +301,38 @@ class CallUiAfterPulse(QWidget, Ui_Form):
                     break
             self.text_message.emit("信号文件数目：{}\n后脉冲文件数目：{}\n后脉冲率：{}".format(len(param["data"]), len(ap_file_list), len(ap_file_list) / len(param["data"])))
             output_data = pd.DataFrame(data_list, columns=columns)
-            print("data list: {}".format(data_list))
-            print("output_data: {}".format(output_data))
-            print(output_data)
             self.canvas2.ax.cla()
             self.canvas2.ax.grid(True)
             self.canvas2.ax.scatter(output_data["Time"].to_numpy(), output_data["Q"].to_numpy())
             self.canvas2.draw()
             if DataSetTool.check_file(os.path.dirname(param["save_file"])):
                 output_data.to_csv(param["save_file"], index=False)
+                #####################################################
+                # 保存文件信息
+                ff = open(param["save_file"].replace(".csv", ".info"), "w")
+                ff.write("date: " + datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]") + "\n")
+                spe_file_index = self.listView.currentIndex().row()
+                if spe_file_index != -1:
+                    ff.write("spe_dir: " + os.path.dirname(self.spe_files_list[spe_file_index]) + "\n")
+                    ff.write("spe_name: " + os.path.basename(self.spe_files_list[spe_file_index]) + "\n")
+                    ff.write("spe_md5: " +
+                             hashlib.md5(open(self.spe_files_list[spe_file_index], "rb").read()).hexdigest() + "\n")
+                if self.comboBox.currentIndex() == 0:
+                    ff.write("Q < " + self.lineEdit.text() + "\n")
+                else:
+                    ff.write("Q > " + self.lineEdit.text() + "\n")
+                ff.write("wave_num: " + self.lineEdit_14.text() + "\n")
+                for key in param:
+                    if key == "data":
+                        continue
+                    elif key == "save_file":
+                        ff.write("after_pulse_dir: " + os.path.dirname(os.path.realpath(param["save_file"])) + "\n")
+                        ff.write("after_pulse_file: " + os.path.basename(os.path.realpath(param["save_file"])) + "\n")
+                        ff.write("after_pulse_md5: " + hashlib.md5(open(param["save_file"], "rb").read()).hexdigest() + "\n")
+                    else:
+                        ff.write(key + ": " + str(param[key]) + "\n")
+                ff.close()
+                #####################################################
             else:
                 QMessageBox.warning(self, "警告", "保存文件设置错误", QMessageBox.Ok)
         else:
@@ -404,6 +426,27 @@ class CallUiAfterPulse(QWidget, Ui_Form):
     def apr_dialog(self):
         dialog = AfterPulseDialog(self)
         dialog.show()
+
+    def view_show_table(self, qmi: QModelIndex):
+        file = self.spe_files_list[qmi.row()]
+        if DataSetTool.check_file(file):
+            pd_data = pd.read_csv(file)
+            pdm = PandasModel(pd_data)
+            table = TableDialog(self, pdm)
+            table.show()
+
+    def view2_show_table(self, qmi: QModelIndex):
+        dir = self.lineEdit_3.text()
+        file = qmi.data()
+        file = os.path.join(dir, file)
+        if DataSetTool.check_file(file):
+            wave = WaveForm.load_from_file(file)
+            t = wave.get_time()
+            a = wave.get_ampl()
+            pd_data = pd.DataFrame(np.stack([t, a], axis=-1), columns=["Time", "Ampl"])
+            pdm = PandasModel(pd_data)
+            table = TableDialog(self, pdm)
+            table.show()
 
 
 class WorkThread(QThread):
