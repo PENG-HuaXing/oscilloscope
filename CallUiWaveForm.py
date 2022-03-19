@@ -1,4 +1,4 @@
-import time, sys, datetime, os
+import time, sys, datetime, os, hashlib
 from UiWaveForm import Ui_Form
 from PmtDataSetTool import DataSetTool
 from PmtConstant import Extremum, Processing, Active, Wave
@@ -251,21 +251,26 @@ class CallUiWaveForm(Ui_Form, QWidget):
             QMessageBox.warning(self, "警告", "文件夹无效", QMessageBox.Ok)
 
     def collect_param(self) -> dict:
-        param = {"int_flag": Wave.Trapezoid, "int_interval": None, "ped_flag": Active.NoPed, "ped_interval": None,
-                 "ext_flag": Active.NoExt, "ext_interval": None, "tri_flag": Active.NoTri, "tri_threshold": None,
-                 "tri_interval": None}
+        # param = {"int_flag": Wave.Trapezoid, "int_interval": None, "ped_flag": Active.NoPed, "ped_interval": None,
+        #          "ext_flag": Active.NoExt, "ext_interval": None, "tri_flag": Active.NoTri, "tri_threshold": None,
+        #          "tri_interval": None}
+        param = dict()
         # 基线参数获取
         if self.checkBox.isChecked():
             param["ped_flag"] = Active.Ped
-            self.lineEdit_7.setEnabled(True)
+            # self.lineEdit_7.setEnabled(True)
             param["ped_interval"] = DataSetTool.comma2interval(self.lineEdit_7.text())
-            self.lineEdit_7.setEnabled(False)
+            # self.lineEdit_7.setEnabled(False)
+        else:
+            param["ped_flag"] = Active.NoPed
         # 积分参数获取
         if self.comboBox.currentIndex() == 1:
             param["int_flag"] = Wave.Riemann
-        self.lineEdit_6.setEnabled(True)
+        else:
+            param["int_flag"] = Wave.Trapezoid
+        # self.lineEdit_6.setEnabled(True)
         param["int_interval"] = DataSetTool.comma2interval(self.lineEdit_6.text())
-        self.lineEdit_6.setEnabled(False)
+        # self.lineEdit_6.setEnabled(False)
         # 获取极值参数
         if self.checkBox_2.isChecked():
             if self.label_9.text() == "极大值":
@@ -273,11 +278,15 @@ class CallUiWaveForm(Ui_Form, QWidget):
             else:
                 param["ext_flag"] = Active.ExtMin
                 param["ext_interval"] = DataSetTool.comma2interval(self.lineEdit_8.text())
+        else:
+            param["ext_flag"] = Active.NoExt
         # 获取触发参数
         if self.checkBox_3.isChecked():
             param["tri_flag"] = Active.Tri
             param["tri_threshold"] = float(self.label_13.text())
             param["tri_interval"] = DataSetTool.comma2interval(self.lineEdit_9.text())
+        else:
+            param["tri_flag"] = Active.NoTri
         return param
 
     def run(self):
@@ -318,7 +327,6 @@ class CallUiWaveForm(Ui_Form, QWidget):
                     break
             if self.processing_flag == Processing.Stop:
                 break
-
         col = ["File", "Q", "Pedestal"]
         if param["ext_flag"] != Active.NoExt:
             col.append("Extremum")
@@ -328,6 +336,25 @@ class CallUiWaveForm(Ui_Form, QWidget):
         pd_data = pd.DataFrame(data, columns=col)
         if DataSetTool.check_file(os.path.dirname(save_file)):
             pd_data.to_csv(save_file, index=False)
+        #################################################
+        # 保存文件信息
+        ff = open(save_file.replace(".csv", ".info"), "w")
+        ff.write("date: " + datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]") + "\n")
+        ff.write("data_dir: " + self.lineEdit.text() + "\n")
+        ff.write("data_num: " + self.lineEdit_2.text() + "\n")
+        for i in range(3):
+            tmp_file = self.data_file_list[i]
+            ff.write("file{}[md5]: {}[{}]\n".format(i, tmp_file, hashlib.md5(open(tmp_file, "rb").read()).hexdigest()))
+        for key in param:
+            if str(key).endswith("interval"):
+                ff.write(key + ": {}, {}\n".format(param[key][1], param[key][2]))
+            else:
+                ff.write(key + ": " + str(param[key]) + "\n")
+        ff.write("save_dir: " + os.path.dirname(os.path.realpath(save_file)) + "\n")
+        ff.write("save_file: " + os.path.basename(os.path.realpath(save_file)) + "\n")
+        ff.write("save_md5: " + hashlib.md5(open(os.path.realpath(save_file), "rb").read()).hexdigest() + "\n")
+        ff.close()
+        #################################################
 
     def draw_wave(self, index: QModelIndex):
         self.canvas.ax.cla()
