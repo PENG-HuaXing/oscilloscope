@@ -24,7 +24,35 @@ class MatPlotDoubleCanvas(FigureCanvas):
             self.ax1.set_ylim(*y_lim)
 
     def init_graph(self):
-        x = np.linspace(-3, 3, 200)
+        x = np.linspace(-8, 8, 200)
+        self.ax1.set_ylim(-5, 5)
+        self.ax2.set_ylim(-5, 5)
         self.ax1.plot(x, np.sin(x))
+        self.ax1.plot(x, np.cos(x))
         self.ax2.plot(x, np.cos(x))
+        self.ax2.plot(x, np.sin(x))
+        self.ax1.set_xlabel("x label")
+        self.ax1.set_ylabel("y label")
+        self.ax1.set_title("title")
+        self.ax1.minorticks_on()
+        self.ax1.grid(True)
+        self.ax2.minorticks_on()
+        self.ax2.grid(True)
+        self.fig.set_tight_layout(True)
         self.draw()
+
+    def initial(self, grid: bool = True, x_label: str = None, y_label: str = None, title: str = None, minor: bool = True):
+        self.ax1.clear()
+        self.ax1.grid(grid)
+        if x_label is not None:
+            self.ax1.set_xlabel(x_label)
+        if y_label is not None:
+            self.ax1.set_ylabel(y_label)
+        if title is not None:
+            self.ax1.set_title(title)
+        if minor is True:
+            self.ax1.minorticks_on()
+            self.ax2.minorticks_on()
+        self.ax2.clear()
+        self.ax2.grid(grid)
+        self.fig.set_tight_layout(True)

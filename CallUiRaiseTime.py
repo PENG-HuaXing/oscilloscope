@@ -207,6 +207,7 @@ class CallUiRaiseTime(QWidget, Ui_Form):
         self.switch_filter2(False, True)
         slm = QStringListModel()
         slm.setStringList([])
+        self.tableView.resizeColumnsToContents()
         self.tableView.setModel(slm)
         self.switch_graph_setting(False, True)
         self.lineEdit_14.clear()
@@ -502,6 +503,7 @@ class CallUiRaiseTime(QWidget, Ui_Form):
             new = pd.concat([file_columns, r2_columns], axis=1)
             new.columns = ["File", "r2"]
             pd_model = PandasModel(new)
+
             self.tableView.setModel(pd_model)
             self.switch_filter2(True, True)
             self.switch_graph_setting(True, True)
@@ -553,10 +555,7 @@ class CallUiRaiseTime(QWidget, Ui_Form):
         wave = WaveForm.load_from_file(data_row["File"])
         t = wave.get_time()
         a = wave.get_ampl()
-        self.mpc1.ax1.cla()
-        self.mpc1.ax1.grid(True)
-        self.mpc1.ax2.cla()
-        self.mpc1.ax2.grid(True)
+        self.mpc1.initial(x_label="time[s]", y_label="Voltage[V]", title="wave form")
         self.mpc1.ax1.plot(t, a)
         self.mpc1.ax2.plot(t[index1 - 20: index2 + 20], a[index1 - 20: index2 + 20])
         if len(data_row) == 9:
