@@ -4,12 +4,10 @@ from UiQDC import Ui_Form
 from PmtDataSetTool import DataSetTool
 from PmtConstant import Fit
 from PmtSpeHist import SpeHist
-from CallDialog import FitDialog
-from PmtWaveForm import WaveForm
+from CallDialog import FitDialog, PandasModel, TableDialog
 from Canvas import MatPlotCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import pandas as pd
 
@@ -39,6 +37,8 @@ class CallUiQDC(QWidget, Ui_Form):
         self.tableWidget.customContextMenuRequested.connect(self.set_channel)
         # 选择行动作
         self.tableWidget.clicked.connect(self.select_row)
+        # 打开原始数据动作
+        self.tableWidget.doubleClicked.connect(self.show_table_data)
         # radio状态
         self.radioButton.setChecked(True)
         self.radioButton.toggled.connect(self.custom_hist_setting)
@@ -227,10 +227,6 @@ class CallUiQDC(QWidget, Ui_Form):
                     print(bins)
                     for i in qdc_hist_content:
                         self.hist_list.append(SpeHist(i, bins))
-            for i in self.hist_list:
-                self.mpc.ax.hist(i.get_scatter()[0], i.get_hist()[1], weights=i.get_hist()[0])
-            print("draw!!")
-            self.mpc.draw()
             # 设置其他控件的状态
             if len(model_index_list) == 2:
                 self.switch_fit_setting(True)
@@ -241,7 +237,13 @@ class CallUiQDC(QWidget, Ui_Form):
                 self.switch_fit_setting(False)
                 self.switch_portion_setting(False, True)
                 self.switch_graph_setting(True, True, False, False)
-                # self.checkBox.setChecked(True)
+            for i in self.hist_list:
+                if self.checkBox.isChecked():
+                    self.mpc.ax.hist(i.get_scatter()[0], i.get_hist()[1], weights=i.get_hist()[0])
+                else:
+                    self.mpc.ax.hist(i.get_scatter()[0], i.get_hist()[1], weights=i.get_hist()[0], histtype="step")
+            print("draw!!")
+            self.mpc.draw()
             # 拟合flag调整到非拟合状态
             self.fit["model"] = Fit.NoFit
         else:
@@ -387,6 +389,18 @@ class CallUiQDC(QWidget, Ui_Form):
         self.lineEdit_5.setText(str(total))
         self.lineEdit_6.setText(str(format(part1 / total, ".5f")))
         self.lineEdit_7.setText(str(format(part2 / total, ".5f")))
+
+    def show_table_data(self, qmi: QModelIndex):
+        file = self.tab_list[qmi.row()]
+        if DataSetTool.check_file(file):
+            pd_data = pd.read_table(file)
+            col = []
+            for i in range(len(pd_data.columns)):
+                col.append("channel {}".format(i))
+            pd_data.columns = col
+            pdm = PandasModel(pd_data)
+            table = TableDialog(self, pdm)
+            table.show()
 
 
 if __name__ == "__main__":
