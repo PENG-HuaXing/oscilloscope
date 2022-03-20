@@ -58,7 +58,7 @@ class CallUiSPE(Ui_Form, QWidget):
         self.lineEdit_8.editingFinished.connect(self.proportion)
         self.comboBox.addItems(["单高斯拟合", "全局拟合", "全局拟合(含噪声)"])
         # x label
-        self.comboBox_2.addItems(["None", "C", "mC", "uC", "nC"])
+        self.comboBox_2.addItems(["None", "C", "mC", "uC", "nC", "pC", "fC"])
         self.comboBox_2.currentIndexChanged.connect(self.refresh)
         # 引出拟合参数设置对话框
         self.pushButton_6.clicked.connect(self.set_fit_param)
