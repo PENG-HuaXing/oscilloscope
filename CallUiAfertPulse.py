@@ -179,7 +179,7 @@ class CallUiAfterPulse(QWidget, Ui_Form):
 
     def select_spe(self, index: QModelIndex):
         self.lineEdit_2.setText(os.path.dirname(self.spe_files_list[index.row()]))
-        # self.switch_filter_setting(True, True)
+        self.switch_filter_setting(True, True)
 
     def filter(self):
         index = self.listView.currentIndex()
