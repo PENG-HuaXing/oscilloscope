@@ -301,7 +301,7 @@ class CallUiAfterPulse(QWidget, Ui_Form):
             self.text_message.emit("信号文件数目：{}\n后脉冲文件数目：{}\n后脉冲率：{}".format(len(param["data"]), len(ap_file_list), len(ap_file_list) / len(param["data"])))
             output_data = pd.DataFrame(data_list, columns=columns)
             self.canvas2.initial(x_label="time[s]", y_label="integral value", title="after pulse scatter")
-            self.canvas2.ax.scatter(output_data["Time"].to_numpy(), output_data["Q"].to_numpy())
+            self.canvas2.ax.scatter(output_data["Time"].to_numpy(), output_data["Q"].to_numpy(), ".")
             self.canvas2.draw()
             if DataSetTool.check_file(os.path.dirname(param["save_file"])):
                 output_data.to_csv(param["save_file"], index=False)
@@ -415,7 +415,7 @@ class CallUiAfterPulse(QWidget, Ui_Form):
                 q_column = pd_data["Q"]
                 print(q_column)
                 self.canvas2.initial(x_label="time[s]", y_label="integral value", title="after pulse scatter")
-                self.canvas2.ax.scatter(time_column.to_numpy(), q_column.to_numpy())
+                self.canvas2.ax.plot(time_column.to_numpy(), q_column.to_numpy(), ".", markersize=1)
                 self.canvas2.draw()
             except KeyError:
                 QMessageBox.warning(self, "警告", "键值错误", QMessageBox.Ok)
