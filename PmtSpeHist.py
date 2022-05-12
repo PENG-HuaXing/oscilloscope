@@ -73,7 +73,7 @@ class SpeHist(object):
 
     @staticmethod
     def signal_n_spe(x: float, mu: float, q0: float, q1: float, sigma1: float, qsh: float = 0):
-        n = 5
+        n = 9
         value = 0
         for i in range(1, n + 1):
             value = value + SpeHist.poisson(i, mu) * SpeHist.gauss(x, 1, q0 + qsh + i * q1, np.sqrt(i) * sigma1)
