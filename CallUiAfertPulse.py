@@ -284,10 +284,10 @@ class CallUiAfterPulse(QWidget, Ui_Form):
                 self.text_message.emit(file_name)
                 if param["ped_flag"] == PmtConstant.AfterPulse.Pedestal:
                     tmp_t, tmp_a = AfterPulse.search_after_pulse(file_name, param["threshold"], param["interval1"],
-                                                                 param["windows"])
+                                                                 param["windows"], param["data"]["Pedestal"].iloc[i])
                 else:
                     tmp_t, tmp_a = AfterPulse.search_after_pulse(file_name, param["threshold"], param["interval1"],
-                                                                 param["windows"], param["data"]["ped"].iloc[i])
+                                                                 param["windows"])
                 tmp_data_list = AfterPulse.zip_data(file_name, tmp_t, tmp_a)
                 for row in tmp_data_list:
                     data_list.append(row)
@@ -301,7 +301,7 @@ class CallUiAfterPulse(QWidget, Ui_Form):
             self.text_message.emit("信号文件数目：{}\n后脉冲文件数目：{}\n后脉冲率：{}".format(len(param["data"]), len(ap_file_list), len(ap_file_list) / len(param["data"])))
             output_data = pd.DataFrame(data_list, columns=columns)
             self.canvas2.initial(x_label="time[s]", y_label="integral value", title="after pulse scatter")
-            self.canvas2.ax.scatter(output_data["Time"].to_numpy(), output_data["Q"].to_numpy(), ".")
+            self.canvas2.ax.scatter(output_data["Time"].to_numpy(), output_data["Q"].to_numpy(), marker=".")
             self.canvas2.draw()
             if DataSetTool.check_file(os.path.dirname(param["save_file"])):
                 output_data.to_csv(param["save_file"], index=False)
