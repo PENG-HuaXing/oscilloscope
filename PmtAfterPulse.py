@@ -3,6 +3,7 @@ import pandas as pd
 import scipy.integrate as integrate
 from PmtDataSetTool import DataSetTool
 from PmtConstant import AfterPulse as Ap
+import PmtWaveForm
 
 
 class AfterPulse(object):
@@ -32,7 +33,9 @@ class AfterPulse(object):
         """
         time = []
         ampl = []
-        wave_data = pd.read_csv(signal_file, header=4)
+        print(signal_file)
+        waveclass = PmtWaveForm.WaveForm.load_from_file(signal_file)
+        wave_data = pd.DataFrame({"Time": waveclass.get_time(), "Ampl": waveclass.get_ampl()})
         after_pulse_data = wave_data[wave_data["Time"] > after_pulse_region]
         after_pulse_time = after_pulse_data["Time"].to_numpy()
         after_pulse_ampl = after_pulse_data["Ampl"].to_numpy()
@@ -59,7 +62,7 @@ class AfterPulse(object):
                 local_min_index = integral_index[0]
             else:
                 local_min = after_pulse_ampl[integral_index[0]: integral_index[-1]].min()
-                local_min_index = np.where((after_pulse_ampl - local_min) < 1e-9)[0][0]
+                local_min_index = np.where(np.fabs(after_pulse_ampl - local_min) < 1e-9)[0][0]
             begin_index = int(local_min_index - span / 2)
             end_index = int(local_min_index + span / 2)
             if begin_index >= 0 and end_index < len(after_pulse_time):
@@ -73,7 +76,7 @@ class AfterPulse(object):
     def zip_data(file_name: str, data_time: list, data_ampl: list) -> list:
         """
         本函数主要对search_after_pulse得到的时间，幅度列表进行转换
-        初始的时间，幅度数据[time1, time2, time3], [amp1, amp2, amp3]，并且无
+        初始的时间，幅度数据[time1, time2, time3], [amp1, amp2, amp3]，并且无)
         波形文件参数，经过本函数转换后得到的数据形式为：
         [[file1, time1, amp1],
          [file1, time2, amp2],
@@ -108,9 +111,12 @@ class AfterPulse(object):
 
 
 if __name__ == "__main__":
-    from PmtSinglePhotonSpectrum import SinglePhotonSpectrum
-    spe = SinglePhotonSpectrum.load_csv("/run/media/einstein/Elements/CR160_data/1353V.csv")
-    filter_data = spe.proportion(-0.15e-10)[0]
-    af = AfterPulse(filter_data, -0.002, 200e-9, 0, 2e-5)
-    af.loop_all("af_data.csv")
+    # from PmtSinglePhotonSpectrum import SinglePhotonSpectrum
+    # spe = SinglePhotonSpectrum.load_csv("/run/media/einstein/Elements/CR160_data/1353V.csv")
+    # filter_data = spe.proportion(-0.15e-10)[0]
+    # af = AfterPulse(filter_data, -0.002, 200e-9, 0, 2e-5)2
+    # af.loop_all("af_data.csv")
+    t, a = AfterPulse.search_after_pulse("/run/media/einstein/Elements/2022_5_10_CR160_data/1300V_afterpulse/C2--w--00000.trc", -0.004, 500e-9, 300e-9, -0.0032779750781358787)
+    print(t)
+    print(a)
 
