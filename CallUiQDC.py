@@ -358,6 +358,10 @@ class CallUiQDC(QWidget, Ui_Form):
                     self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 3))
                     self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 4))
                     self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 5))
+                    self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 6))
+                    self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 7))
+                    self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 8))
+                    self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 9))
             if self.fit["model"] == Fit.GlobalNoise:
                 self.mpc.ax.plot(x, SpeHist.global_noise_model(x, *self.fit["param"]))
                 if check_status == 2:
@@ -369,6 +373,10 @@ class CallUiQDC(QWidget, Ui_Form):
                     self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 3, par[1] / par[2]))
                     self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 4, par[1] / par[2]))
                     self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 5, par[1] / par[2]))
+                    self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 6, par[1] / par[2]))
+                    self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 7, par[1] / par[2]))
+                    self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 8, par[1] / par[2]))
+                    self.mpc.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 9, par[1] / par[2]))
         else:
             pass
 
