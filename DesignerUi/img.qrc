@@ -1,0 +1,9 @@
+<RCC>
+  <qresource prefix="jpg">
+    <file>images/IHEPLOGOMINMIN.jpg</file>
+    <file>images/467203239ANOTHER.jpg</file>
+    <file>images/PMTSMALL.jpg</file>
+    <file>images/IHEPLOGOSMALL.jpg</file>
+    <file>images/LOGOSMALL.jpg</file>
+  </qresource>
+</RCC>
