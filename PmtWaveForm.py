@@ -24,8 +24,12 @@ class WaveForm(object):
     def load_from_file(cls, file: str):
         if file.endswith("csv"):
             tmp_data = pd.read_csv(file, header=4)
-            tmp_t = tmp_data["Time"].to_numpy()
-            tmp_a = tmp_data["Ampl"].to_numpy()
+            try: 
+                tmp_t = tmp_data["Time"].to_numpy() 
+                tmp_a = tmp_data["Ampl"].to_numpy()
+            except KeyError: 
+                tmp_t = tmp_data.iloc[:, 0].to_numpy() 
+                tmp_a = tmp_data.iloc[:, 1].to_numpy()
             return cls(tmp_t, tmp_a)
         if file.endswith("trc"):
             trc = readTrc.Trc()
