@@ -1,6 +1,7 @@
 import numpy as np
 from PmtConstant import Fit
 from scipy.optimize import curve_fit
+import math
 
 
 class SpeHist(object):
@@ -54,7 +55,7 @@ class SpeHist(object):
     @staticmethod
     def poisson(n: int, mu: float):
         n = int(n)
-        return mu ** n * np.exp(-mu) / np.math.factorial(n)
+        return mu ** n * np.exp(-mu) / math.factorial(n)
 
     @staticmethod
     def s_ped(x: float, mu: float, q0: float, sigma0: float):
