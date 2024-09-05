@@ -119,9 +119,13 @@ class SpeHist(object):
                 for i in param:
                     par.append(i[0])
                     bounds.append((i[1], i[2]))
-                fit_par, par_cov = curve_fit(SpeHist.gauss, self.scatter_x[self._interval2index(interval1, interval2)],
-                                             self.scatter_y[self._interval2index(interval1, interval2)], par,
-                                             bounds=list(zip(*bounds)))
+                try:
+                    fit_par, par_cov = curve_fit(SpeHist.gauss, self.scatter_x[self._interval2index(interval1, interval2)],
+                                                self.scatter_y[self._interval2index(interval1, interval2)], par,
+                                                bounds=list(zip(*bounds)))
+                except RuntimeError as e:
+                    print(e)
+                    return None, None
                 return fit_par, par_cov
             else:
                 print("参数错误: {}".format(param))
@@ -133,11 +137,16 @@ class SpeHist(object):
                 for i in param:
                     par.append(i[0])
                     bounds.append((i[1], i[2]))
-                fit_par, par_cov = curve_fit(SpeHist.global_model, self.scatter_x, self.scatter_y, par,
-                                             bounds=list(zip(*bounds)))
+                try:
+                    fit_par, par_cov = curve_fit(SpeHist.global_model, self.scatter_x, self.scatter_y, par,
+                                                bounds=list(zip(*bounds)))
+                except RuntimeError as e:
+                    print(e)
+                    return None, None
                 return fit_par, par_cov
             else:
                 print("参数错误: {}".format(param))
+                return None, None
         if mod == Fit.GlobalNoise:
             if len(param) == 8:
                 par = []
@@ -145,11 +154,16 @@ class SpeHist(object):
                 for i in param:
                     par.append(i[0])
                     bounds.append((i[1], i[2]))
-                fit_par, par_cov = curve_fit(SpeHist.global_noise_model, self.scatter_x, self.scatter_y, par,
-                                             bounds=list(zip(*bounds)))
+                try:
+                    fit_par, par_cov = curve_fit(SpeHist.global_noise_model, self.scatter_x, self.scatter_y, par,
+                                                bounds=list(zip(*bounds)))
+                except RuntimeError as e:
+                    print(e)
+                    return None, None
                 return fit_par, par_cov
             else:
                 print("参数错误: {}".format(param))
+                return None, None
 
 
 if __name__ == "__main__":
