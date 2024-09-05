@@ -170,6 +170,22 @@ class DataSetTool(object):
         else:
             return None
 
+    @staticmethod
+    def convert_datalist2commastr(data:list):
+        '''
+        convert data list like [500.0, -inf, inf] to a string like "500.0"
+        or convert data list like [500.0, 400, 800] to a string like "500.0, 400, 800"
+
+        '''
+        if len(data) == 3:
+            if data[1] is np.inf or data[2] is np.inf:
+                return str(data[0])
+            else:
+                return str(data[0])+","+str(data[1]) + ","+str(data[2])
+        else:
+            print("data error!!")
+            return "0"
+
 
 
 if __name__ == "__main__":
