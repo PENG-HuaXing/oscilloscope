@@ -347,36 +347,45 @@ class CallUiSPE(Ui_Form, QWidget):
         if self.fit["model"] != Fit.NoFit:
             x = self.hist[0].get_scatter()[0]
             if self.fit["model"] == Fit.Gauss and (check_status == 1 or check_status == 2):
-                self.canvas.ax.plot(x, SpeHist.gauss(x, *self.fit["param"]))
+                if self.fit['param'][0] is None:
+                    QMessageBox.warning(self, "警告", "拟合参数不正确", QMessageBox.Ok)
+                else:
+                    self.canvas.ax.plot(x, SpeHist.gauss(x, *self.fit["param"]))
             if self.fit["model"] == Fit.Global:
-                self.canvas.ax.plot(x, SpeHist.global_model(x, *self.fit["param"]))
-                if check_status == 2:
-                    par = self.fit["param"]
-                    self.canvas.ax.plot(x, par[0] * SpeHist.s_ped(x, par[1], par[2], par[3]))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 1))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 2))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 3))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 4))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 5))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 6))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 7))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 8))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 9))
+                if self.fit["param"][0] is None:
+                    QMessageBox.warning(self, "警告", "拟合参数不正确", QMessageBox.Ok)
+                else:
+                    self.canvas.ax.plot(x, SpeHist.global_model(x, *self.fit["param"]))
+                    if check_status == 2:
+                        par = self.fit["param"]
+                        self.canvas.ax.plot(x, par[0] * SpeHist.s_ped(x, par[1], par[2], par[3]))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 1))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 2))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 3))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 4))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 5))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 6))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 7))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 8))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[1], par[2], par[4], par[5], 9))
             if self.fit["model"] == Fit.GlobalNoise:
-                self.canvas.ax.plot(x, SpeHist.global_noise_model(x, *self.fit["param"]))
-                if check_status == 2:
-                    par = self.fit["param"]
-                    self.canvas.ax.plot(x, par[0] * (1 - par[1]) * SpeHist.s_ped(x, par[3], par[4], par[5]))
-                    self.canvas.ax.plot(x, par[0] * par[1] * SpeHist.poisson(0, par[3]) * SpeHist.noise_exp(x, par[2], par[4]))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 1, par[1] / par[2]))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 2, par[1] / par[2]))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 3, par[1] / par[2]))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 4, par[1] / par[2]))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 5, par[1] / par[2]))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 6, par[1] / par[2]))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 7, par[1] / par[2]))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 8, par[1] / par[2]))
-                    self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 9, par[1] / par[2]))
+                if self.fit["param"][0] is None:
+                    QMessageBox.warning(self, "警告", "拟合参数不正确", QMessageBox.Ok)
+                else:
+                    self.canvas.ax.plot(x, SpeHist.global_noise_model(x, *self.fit["param"]))
+                    if check_status == 2:
+                        par = self.fit["param"]
+                        self.canvas.ax.plot(x, par[0] * (1 - par[1]) * SpeHist.s_ped(x, par[3], par[4], par[5]))
+                        self.canvas.ax.plot(x, par[0] * par[1] * SpeHist.poisson(0, par[3]) * SpeHist.noise_exp(x, par[2], par[4]))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 1, par[1] / par[2]))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 2, par[1] / par[2]))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 3, par[1] / par[2]))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 4, par[1] / par[2]))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 5, par[1] / par[2]))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 6, par[1] / par[2]))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 7, par[1] / par[2]))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 8, par[1] / par[2]))
+                        self.canvas.ax.plot(x, par[0] * SpeHist.n_gauss(x, par[3], par[4], par[6], par[7], 9, par[1] / par[2]))
         else:
             pass
 

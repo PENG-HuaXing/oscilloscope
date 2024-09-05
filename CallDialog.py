@@ -105,10 +105,51 @@ class TriggerDialog(QDialog):
 
 
 class FitDialog(QDialog):
+    '''
+    Parameters_cache.dat is a file that save fit parameters temporary as a cache.
+    Everytime the user refit the curve and open the fit dialog, the file data will be
+    read.
+    
+    parameters_cache.dat
+    line1: amp,         lower, upper
+    line2: w,           lower, upper
+    line3: alpha,       lower, upper
+    line4: mu,          lower, upper
+    line5: q0,          lower, upper
+    line6: sigma0,      lower, upper
+    line7: q1,          lower, upper
+    line8: sigma1,      lower, upper
+    
+    '''
+
+        
+    
+    
     out_message = pyqtSignal(dict)
 
     def __init__(self, parent=None, model=Fit.Gauss):
         super(FitDialog, self).__init__(parent)
+        #########################
+        with open('parameters_cache.dat', 'r+') as ff:
+            cachedata = ff.readlines()
+            if len(cachedata) < 8:
+                ff.writelines(
+                    ['100, 0, 10000\n',
+                    '0.5, 0, 1\n',
+                    '0.1, 0, 5\n',
+                    '0.1, 0, 1\n',
+                    '0, -1, 1\n', 
+                    '1, -1, 5\n',
+                    '5, 1, 8\n',
+                    '2, 0, 5\n',
+                    ]
+                )
+            ff.seek(0)
+            self.param_list = ff.readlines()
+
+        print("*"*10+'\n')
+        print(self.param_list)
+        #############################################
         self.data_dict = dict()
         self.data_dict["model"] = Fit.NoFit
         self.data_dict["param"] = []
@@ -136,14 +177,14 @@ class FitDialog(QDialog):
         self.sigma0 = QLabel("参数sigma0: ")
         self.q1 = QLabel("参数q1: ")
         self.sigma1 = QLabel("参数sigma1: ")
-        self.amp_edit = QLineEdit()
-        self.w_edit = QLineEdit()
-        self.alpha_edit = QLineEdit()
-        self.mu_edit = QLineEdit()
-        self.q0_edit = QLineEdit()
-        self.sigma0_edit = QLineEdit()
-        self.q1_edit = QLineEdit()
-        self.sigma1_edit = QLineEdit()
+        self.amp_edit = QLineEdit();        self.amp_edit.setText(          self.param_list[0].strip().replace(" ", ""))
+        self.w_edit = QLineEdit();          self.w_edit.setText(            self.param_list[1].strip().replace(" ",""))
+        self.alpha_edit = QLineEdit();      self.alpha_edit.setText(        self.param_list[2].strip().replace(" ","")) 
+        self.mu_edit = QLineEdit();         self.mu_edit.setText(           self.param_list[3].strip().replace(" ",""))
+        self.q0_edit = QLineEdit();         self.q0_edit.setText(           self.param_list[4].strip().replace(" ",""))
+        self.sigma0_edit = QLineEdit();     self.sigma0_edit.setText(       self.param_list[5].strip().replace(" ",""))
+        self.q1_edit = QLineEdit();         self.q1_edit.setText(           self.param_list[6].strip().replace(" ",""))
+        self.sigma1_edit = QLineEdit();     self.sigma1_edit.setText(       self.param_list[7].strip().replace(" ",""))
         self.fit_button = QPushButton("拟合")
         self.cancel_button = QPushButton("取消")
         form = QFormLayout(self)
@@ -213,6 +254,9 @@ class FitDialog(QDialog):
             QMessageBox.warning(None, "警告", "参数错误", QMessageBox.Ok)
 
     def emit_param(self):
+        with open('parameters_cache.dat', 'r') as ff:
+            param_list = ff.readlines()
+
         self.data_dict["param"].clear()
         if self.model == Fit.Gauss:
             # 拟合模型为高斯函数时
@@ -231,6 +275,11 @@ class FitDialog(QDialog):
                 if len(self.data_dict["param"]) == 3:
                     self.out_message.emit(self.data_dict)
                     print(self.data_dict)
+                    param_list[0] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][0]) + '\n'
+                    param_list[4] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][1]) + '\n'
+                    param_list[5] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][2]) + '\n'
+                    with open('parameters_cache.dat', 'w') as ff:
+                        ff.writelines(param_list)
                     self.close()
                 else:
                     print("参数错误")
@@ -249,6 +298,14 @@ class FitDialog(QDialog):
                 if len(self.data_dict["param"]) == 6:
                     self.out_message.emit(self.data_dict)
                     print(self.data_dict)
+                    param_list[0] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][0]) + '\n'
+                    param_list[3] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][1]) + '\n'
+                    param_list[4] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][2]) + '\n'
+                    param_list[5] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][3]) + '\n'
+                    param_list[6] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][4]) + '\n'
+                    param_list[7] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][5]) + '\n'
+                    with open('parameters_cache.dat', 'w') as ff:
+                        ff.writelines(param_list)
                     self.close()
                 else:
                     print("参数错误")
@@ -270,6 +327,16 @@ class FitDialog(QDialog):
                 if len(self.data_dict["param"]) == 8:
                     self.out_message.emit(self.data_dict)
                     print(self.data_dict)
+                    param_list[0] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][0]) + '\n'
+                    param_list[1] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][1]) + '\n'
+                    param_list[2] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][2]) + '\n'
+                    param_list[3] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][3]) + '\n'
+                    param_list[4] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][4]) + '\n'
+                    param_list[5] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][5]) + '\n'
+                    param_list[6] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][6]) + '\n'
+                    param_list[7] = DataSetTool.convert_datalist2commastr(self.data_dict["param"][7]) + '\n'
+                    with open('parameters_cache.dat', 'w') as ff:
+                        ff.writelines(param_list)
                     self.close()
                 else:
                     print("参数错误")
