@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.sh": "shellscript",
+        "*.py": "python",
+        "global.C": "cpp"
+    }
+}
