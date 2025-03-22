@@ -35,6 +35,9 @@ class WaveForm(object):
             trc = readTrc.Trc()
             x, y, d = trc.open(file)
             return cls(x, y)
+        if file.endswith("npy"):
+            x, y = np.load(file)
+            return cls(x, y)
 
     @staticmethod
     def cubic_fun(x: float, a: float = 1, b: float = 1, c: float = 1, d: float = 1):

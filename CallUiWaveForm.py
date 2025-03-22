@@ -121,7 +121,7 @@ class CallUiWaveForm(Ui_Form, QWidget):
             file_list = os.listdir(dir_name)
             base_name = []
             for i in file_list:
-                if i.endswith(".csv") or i.endswith("trc"):
+                if i.endswith(".csv") or i.endswith("trc") or i.endswith("npy"):
                     base_name.append(i)
             base_name.sort()
             for i in base_name:
